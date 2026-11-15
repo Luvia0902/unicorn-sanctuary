@@ -152,7 +152,7 @@ export function showToast(msg) {
 }
 
 export function closeAllModals() {
-    ['modalPool', 'modalAltar', 'modalOracle', 'modalTree', 'modalFireDomain', 'modalWaterDomain'].forEach((id) => {
+    ['modalPool', 'modalAltar', 'modalOracle', 'modalTree', 'modalFireDomain', 'modalWaterDomain', 'modalWindDomain'].forEach((id) => {
         const el = document.getElementById(id);
         if (el) {
             el.style.display = 'none';
@@ -173,6 +173,12 @@ export const WATER_ORACLE_QUOTES = [
     '💧 <b>【滄溟聖諭・甘露靈泉】</b><br>「瑤池甘露落星津，潤物無聲萬象新；靜聽深海潮音起，靈犀一點破迷津。」<br><span style="font-size:13px; color:#b3f0ff;">👉 您的直覺與靈感正在大幅覺醒，請留意近期浮現的靈光一閃與溫柔貴人！</span>'
 ];
 
+export const WIND_ORACLE_QUOTES = [
+    '🍃 <b>【靈風聖諭・隨風化境】</b><br>「不滯於物不困情，清風拂野過千林；一朝抖擻雙翎翼，天闊雲舒任遠行！」<br><span style="font-size:13px; color:#b9f6ca;">👉 蒼穹風元素獨角獸賜予您放下執念的輕盈能量：不拘泥於過去形式，轉念之間海闊天空！</span>',
+    '🍃 <b>【靈風聖諭・心若明鏡】</b><br>「長風浩蕩掃殘陰，碧落無塵照客心；萬籟俱寂靈犀動，清音一曲勝萬金！」<br><span style="font-size:13px; color:#b9f6ca;">👉 當思維不再被繁雜雜音干擾，您的判斷力將變得無比清晰敏銳，順心而行必得自在！</span>',
+    '🍃 <b>【靈風聖諭・御風扶搖】</b><br>「蓄力清幽碧玉間，乘時一躍上青天；莫憂前路風勢定，展翼長空傲九淵！」<br><span style="font-size:13px; color:#b9f6ca;">👉 您所累積的才智與靈氣正在迎來起飛之風，把握靈動先機，展翅乘風扶搖直上！</span>'
+];
+
 export class OracleSystem {
     constructor({
         scene,
@@ -188,6 +194,7 @@ export class OracleSystem {
         wishTreeFX,
         fireDomainFX,
         waterDomainFX,
+        windDomainFX,
         setCameraTarget
     }) {
         this.scene = scene;
@@ -203,6 +210,7 @@ export class OracleSystem {
         this.wishTreeFX = wishTreeFX;
         this.fireDomainFX = fireDomainFX;
         this.waterDomainFX = waterDomainFX;
+        this.windDomainFX = windDomainFX;
         this.setCameraTarget = setCameraTarget;
 
         this.currentCategory = '心靈療癒與陪伴';
@@ -1179,6 +1187,26 @@ export class OracleSystem {
                 },
                 new THREE.Vector3(-22.0, 0, -7.2)
             );
+        } else if (stationName === 'wind_domain') {
+            if (btns[7]) btns[7].classList.add('active');
+            showToast('🍃 主角正踏上青雲碧玉階梯，走進「蒼穹獨角獸・靈風元素領域」...');
+            this.setCameraTarget(new THREE.Vector3(0, 4.4, -15.8), new THREE.Vector3(0, 2.1, -23.5));
+            this.hero.walkTo(
+                new THREE.Vector3(0, 0, -21.2),
+                () => {
+                    const quoteEl = document.getElementById('windBlessingQuote');
+                    if (quoteEl) quoteEl.style.display = 'none';
+                    const modalEl = document.getElementById('modalWindDomain');
+                    if (modalEl) {
+                        modalEl.style.display = 'block';
+                        modalEl.classList.remove('oracle-reveal-anim');
+                        void modalEl.offsetWidth;
+                        modalEl.classList.add('oracle-reveal-anim');
+                    }
+                    showToast('🌀 已抵達「蒼穹靈風・風元素領域」！感受長空息吹的通透與自由共鳴');
+                },
+                new THREE.Vector3(0, 0, -23.5)
+            );
         }
     }
 
@@ -1315,6 +1343,20 @@ export class OracleSystem {
             }
             this.setCameraTarget(new THREE.Vector3(-18.5, 3.3, -1.2), new THREE.Vector3(-22.0, 2.3, -7.2));
             showToast('💧 滄溟獨角獸揚起琉璃星海潮汐！溫柔澄澈的淨化與靈感正環繞全身！');
+        };
+
+        window.triggerWindUnicornAwakening = () => {
+            if (this.windDomainFX && this.windDomainFX.triggerAwakening) {
+                this.windDomainFX.triggerAwakening();
+            }
+            const quoteEl = document.getElementById('windBlessingQuote');
+            if (quoteEl) {
+                const pick = WIND_ORACLE_QUOTES[Math.floor(Math.random() * WIND_ORACLE_QUOTES.length)];
+                quoteEl.innerHTML = pick;
+                quoteEl.style.display = 'block';
+            }
+            this.setCameraTarget(new THREE.Vector3(0, 3.5, -16.2), new THREE.Vector3(0, 2.2, -23.5));
+            showToast('🍃 蒼穹靈風獨角獸展翅召喚長空清嵐！思維通透與自由豁達的靈風正環繞全身！');
         };
     }
 }

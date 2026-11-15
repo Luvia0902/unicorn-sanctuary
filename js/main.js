@@ -2,10 +2,10 @@
 // main.js：Three.js 場景初始化、燈光、森林樹木/螢火蟲生成、Raycaster 點擊事件與主動畫迴圈
 // =========================================================================
 
-import { SanctuaryUnicorn25D } from './Unicorn25D.js?v=20261115_10';
-import { EasternHeroController } from './EasternHero.js?v=20261115_10';
-import { OracleSystem, showToast, closeAllModals } from './OracleSystem.js?v=20261115_10';
-import { SanctuaryAudio } from './SanctuaryAudio.js?v=20261115_10';
+import { SanctuaryUnicorn25D } from './Unicorn25D.js?v=20261115_12';
+import { EasternHeroController } from './EasternHero.js?v=20261115_12';
+import { OracleSystem, showToast, closeAllModals } from './OracleSystem.js?v=20261115_12';
+import { SanctuaryAudio } from './SanctuaryAudio.js?v=20261115_12';
 
 // =========================================================================
 // 1. 場景、相機與渲染器（防黑屏檢核：明確深藍夜空背景與 ClearColor）
@@ -728,7 +728,7 @@ for (let i = 0; i < 96; i++) {
     const angle = (i / 96) * Math.PI * 2 + (Math.random() - 0.5) * 0.11;
     const dist = 13.0 + (i % 4) * 3.0 + Math.random() * 2.4;
 
-    // 保留正南方參道入口拱門視線走廊、東方赤焰獨角獸領域及石橋、西方琉璃水元素獨角獸領域及星橋通道
+    // 保留正南方參道入口拱門視線走廊、東方赤焰獨角獸領域及石橋、西方琉璃水元素獨角獸領域及星橋通道、北方蒼穹風元素領域及青雲階
     const wx = Math.cos(angle) * dist;
     const wz = Math.sin(angle) * dist;
     if (Math.abs(wx) < 3.0 && wz > 7.5 && wz < 20.5) continue;
@@ -736,6 +736,10 @@ for (let i = 0; i < 96; i++) {
     if (wx > 7.5 && wx < 20.5 && Math.abs(wz - (-0.33 * wx)) < 3.2) continue;
     if (Math.hypot(wx - (-22.0), wz - (-7.2)) < 10.8) continue;
     if (wx < -7.5 && wx > -20.5 && Math.abs(wz - (0.33 * wx)) < 3.2) continue;
+    if (Math.hypot(wx - 0.0, wz - (-23.5)) < 10.8) continue;
+    if (Math.abs(wx) < 3.2 && wz < -3.5 && wz > -18.5) continue;
+    if (Math.hypot(wx - 0.0, wz - (-23.5)) < 10.8) continue;
+    if (Math.abs(wx) < 3.2 && wz < -3.5 && wz > -18.5) continue;
 
     // 讓照片原款蒼翠大橡樹 (0)、雙幹古楓香 (1)、寬冠古榕 (2) 佔主體，並穿插高聳白楊 (3)、黃金銀杏 (4)、垂柳 (5) 與靈櫻 (6)
     const pattern = [0, 1, 0, 2, 3, 0, 4, 1, 5, 2, 6];
@@ -768,6 +772,8 @@ for (let i = 0; i < 130; i++) {
     if (wx > 7.5 && wx < 20.5 && Math.abs(wz - (-0.33 * wx)) < 3.2) continue;
     if (Math.hypot(wx - (-22.0), wz - (-7.2)) < 10.8) continue;
     if (wx < -7.5 && wx > -20.5 && Math.abs(wz - (0.33 * wx)) < 3.2) continue;
+    if (Math.hypot(wx - 0.0, wz - (-23.5)) < 10.8) continue;
+    if (Math.abs(wx) < 3.2 && wz < -3.5 && wz > -18.5) continue;
 
     const outerTypes = [0, 2, 1, 3, 0, 4, 2, 5];
     const tree = buildDiverseTree(outerTypes[i % outerTypes.length], i + 7);
@@ -828,10 +834,11 @@ const glowingMushrooms = mushroomCapMats.map((mat, idx) => ({
 
 for (let i = 0; i < 26; i++) {
     const ang = (i / 26) * Math.PI * 2 + (Math.random() - 0.5) * 0.15;
-    // 避開正南參道中央、東方赤焰石橋通道與西方琉璃星橋通道
+    // 避開正南參道中央、東方赤焰石橋通道、西方琉璃星橋通道與北方青雲階
     if (Math.abs(Math.cos(ang)) < 0.25 && Math.sin(ang) > 0) continue;
     if (Math.cos(ang) > 0.7 && Math.abs(Math.sin(ang) - (-0.31)) < 0.28) continue;
     if (Math.cos(ang) < -0.7 && Math.abs(Math.sin(ang) - (-0.31)) < 0.28) continue;
+    if (Math.abs(Math.cos(ang)) < 0.28 && Math.sin(ang) < -0.7) continue;
 
     const r = 10.8 + Math.random() * 4.4;
     const cluster = new THREE.Group();
@@ -3161,6 +3168,835 @@ const waterDomainFX = {
 };
 let heroInWaterDomain = false;
 
+// =========================================================================
+// 2.97 🍃 蒼穹靈風・風元素領域 (Wind-Element Unicorn Domain, 座標 (0.0, 0, -23.5))
+//      以風元素與長空極光構建的北側秘境：碧玉青雲踏階、天青靈風鳥居、八卦風輪法陣大地、
+//      8 座碧玉流風靈柱、青鸞翡翠搖風古樹、天青翡翠晶簇與 2.5D 蒼穹靈風獨角獸祭壇
+// =========================================================================
+const windDomainCenter = new THREE.Vector3(0.0, 0, -23.5);
+const windDomainGroup = new THREE.Group();
+windDomainGroup.position.copy(windDomainCenter);
+scene.add(windDomainGroup);
+
+// (A) 繪製蒼穹靈風大地貼圖 (512x512 Canvas)
+function createWindDomainGroundTexture() {
+    const c = document.createElement('canvas');
+    c.width = 512;
+    c.height = 512;
+    const ctx = c.getContext('2d');
+    const cx = 256;
+    const cy = 256;
+
+    // 1. 碧玉翡翠綠與天青極光漸層基底
+    const bgGrad = ctx.createRadialGradient(cx, cy, 18, cx, cy, 250);
+    bgGrad.addColorStop(0.0, 'rgba(105, 255, 205, 0.95)');
+    bgGrad.addColorStop(0.22, 'rgba(0, 195, 140, 0.92)');
+    bgGrad.addColorStop(0.55, 'rgba(4, 75, 52, 0.90)');
+    bgGrad.addColorStop(0.85, 'rgba(2, 38, 26, 0.72)');
+    bgGrad.addColorStop(1.0, 'rgba(2, 18, 12, 0.0)');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 512, 512);
+
+    // 2. 螺旋流風旋渦水脈曲線 (Spiral Wind Vortex)
+    for (let i = 0; i < 16; i++) {
+        const baseA = (i / 16) * Math.PI * 2;
+        ctx.strokeStyle = i % 2 === 0 ? 'rgba(165, 255, 225, 0.75)' : 'rgba(80, 240, 180, 0.52)';
+        ctx.lineWidth = i % 2 === 0 ? 2.8 : 1.8;
+        ctx.beginPath();
+        let r = 32;
+        let a = baseA;
+        ctx.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+        while (r < 232) {
+            r += 18;
+            a += 0.22 + Math.sin(i * 1.8 + r * 0.05) * 0.08;
+            ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+        }
+        ctx.stroke();
+    }
+
+    // 3. 雙層風輪法陣環與八風方位靈符
+    [108, 156, 192].forEach((rad, idx) => {
+        ctx.strokeStyle = idx === 0 ? 'rgba(200, 255, 235, 0.88)' : 'rgba(90, 245, 195, 0.65)';
+        ctx.lineWidth = idx === 0 ? 3.0 : 2.0;
+        ctx.beginPath();
+        ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+        ctx.stroke();
+    });
+
+    // 八芒靈風星盤
+    ctx.strokeStyle = 'rgba(180, 255, 220, 0.72)';
+    ctx.lineWidth = 2.0;
+    for (let k = 0; k < 8; k++) {
+        const a1 = (k / 8) * Math.PI * 2;
+        const a2 = ((k + 3) / 8) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a1) * 108, cy + Math.sin(a1) * 108);
+        ctx.lineTo(cx + Math.cos(a2) * 108, cy + Math.sin(a2) * 108);
+        ctx.stroke();
+    }
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.encoding = THREE.sRGBEncoding;
+    return tex;
+}
+
+const windGroundMat = new THREE.MeshStandardMaterial({
+    map: createWindDomainGroundTexture(),
+    transparent: true,
+    roughness: 0.25,
+    metalness: 0.35,
+    emissive: new THREE.Color(0x008855),
+    emissiveIntensity: 0.42,
+    depthWrite: false
+});
+const windGround = new THREE.Mesh(new THREE.PlaneGeometry(19.5, 19.5), windGroundMat);
+windGround.rotation.x = -Math.PI / 2;
+windGround.position.set(0, 0.025, 0);
+windDomainGroup.add(windGround);
+
+// (B) 繪製 2.5D 蒼穹風靈珠 Sprite 貼圖 (供風鈴燈座與 8 座風靈柱頂端使用)
+function createWindPearlTexture() {
+    const c = document.createElement('canvas');
+    c.width = 128;
+    c.height = 192;
+    const ctx = c.getContext('2d');
+
+    const outerG = ctx.createRadialGradient(64, 118, 8, 64, 108, 58);
+    outerG.addColorStop(0.0, 'rgba(240, 255, 250, 1.0)');
+    outerG.addColorStop(0.32, 'rgba(100, 255, 205, 0.92)');
+    outerG.addColorStop(0.68, 'rgba(0, 185, 120, 0.68)');
+    outerG.addColorStop(1.0, 'rgba(0, 60, 40, 0.0)');
+    ctx.fillStyle = outerG;
+    ctx.beginPath();
+    ctx.moveTo(64, 16);
+    ctx.quadraticCurveTo(118, 88, 96, 150);
+    ctx.quadraticCurveTo(64, 182, 32, 150);
+    ctx.quadraticCurveTo(10, 88, 64, 16);
+    ctx.fill();
+
+    const innerG = ctx.createRadialGradient(64, 128, 4, 64, 120, 32);
+    innerG.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+    innerG.addColorStop(0.55, 'rgba(190, 255, 235, 0.9)');
+    innerG.addColorStop(1.0, 'rgba(0, 220, 150, 0.0)');
+    ctx.fillStyle = innerG;
+    ctx.beginPath();
+    ctx.arc(64, 122, 28, 0, Math.PI * 2);
+    ctx.fill();
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.encoding = THREE.sRGBEncoding;
+    return tex;
+}
+const windPearlTex = createWindPearlTexture();
+const animatedWindSprites = [];
+
+// (C) 連接主聖域與風元素領域的「碧玉青雲踏階」與「天青靈風結界鳥居」
+const deepJadeMat = new THREE.MeshStandardMaterial({
+    color: 0x0c3324,
+    roughness: 0.35,
+    metalness: 0.45
+});
+const mintSilverMat = new THREE.MeshStandardMaterial({
+    color: 0x85ffd8,
+    emissive: 0x00bb77,
+    emissiveIntensity: 0.85,
+    roughness: 0.2,
+    metalness: 0.65
+});
+const paleJadeMat = new THREE.MeshStandardMaterial({
+    color: 0x228866,
+    emissive: 0x084428,
+    emissiveIntensity: 0.45,
+    roughness: 0.3,
+    metalness: 0.3
+});
+
+// 8 階碧玉鑲銀青雲階，自北側 (0, 0, -4.2) 直通 (0.0, 0, -14.6)
+for (let s = 0; s < 8; s++) {
+    const t = s / 7;
+    const bz = -4.2 - t * 10.4;
+    const bx = Math.sin(s * 0.9) * 0.35;
+    const stepGroup = new THREE.Group();
+    stepGroup.position.set(bx, 0.03 + s * 0.02, bz);
+
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.08, 1.05), deepJadeMat);
+    stepGroup.add(slab);
+
+    const trimL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.09, 0.95), mintSilverMat);
+    trimL.position.x = 1.02;
+    const trimR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.09, 0.95), mintSilverMat);
+    trimR.position.x = -1.02;
+    stepGroup.add(trimL, trimR);
+
+    const stepGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.11, 0), mintSilverMat);
+    stepGem.position.set(0, 0.06, 0);
+    stepGroup.add(stepGem);
+
+    scene.add(stepGroup);
+}
+
+// 領域入口「天青靈風鳥居」位於 (0.0, 0, -15.5)
+const windGateGroup = new THREE.Group();
+windGateGroup.position.set(0.0, 0, -15.5);
+scene.add(windGateGroup);
+
+const windPillarMat = new THREE.MeshStandardMaterial({
+    color: 0x144d38,
+    roughness: 0.38,
+    metalness: 0.25
+});
+const windGoldMat = new THREE.MeshStandardMaterial({
+    color: 0xaaffdd,
+    emissive: 0x00ee99,
+    emissiveIntensity: 0.72,
+    roughness: 0.22,
+    metalness: 0.75
+});
+
+[-1.6, 1.6].forEach((colX) => {
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.29, 4.4, 16), windPillarMat);
+    col.position.set(colX, 2.2, 0);
+    const colBase = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.48, 0.38, 16), paleJadeMat);
+    colBase.position.set(colX, 0.19, 0);
+    const colRing = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.06, 10, 20), windGoldMat);
+    colRing.position.set(colX, 3.65, 0);
+    colRing.rotation.x = Math.PI / 2;
+    windGateGroup.add(col, colBase, colRing);
+});
+
+const windBeamTop = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.34, 0.46), windPillarMat);
+windBeamTop.position.set(0, 4.25, 0);
+const windBeamTopTrim = new THREE.Mesh(new THREE.BoxGeometry(4.7, 0.08, 0.52), windGoldMat);
+windBeamTopTrim.position.set(0, 4.43, 0);
+const windBeamSub = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.24, 0.34), windPillarMat);
+windBeamSub.position.set(0, 3.65, 0);
+windGateGroup.add(windBeamTop, windBeamTopTrim, windBeamSub);
+
+// 鳥居兩側浮空碧玉風鈴長明燈座
+[-2.4, 2.4].forEach((lx) => {
+    const lanternG = new THREE.Group();
+    lanternG.position.set(lx, 0, 0);
+
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.38, 0.55, 8), paleJadeMat);
+    base.position.y = 0.28;
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 1.25, 8), deepJadeMat);
+    stem.position.y = 1.15;
+    const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.18, 0.45, 8), windGoldMat);
+    cup.position.y = 1.95;
+    lanternG.add(base, stem, cup);
+
+    const spMat = new THREE.SpriteMaterial({
+        map: windPearlTex,
+        color: 0x99ffe0,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+    const sp = new THREE.Sprite(spMat);
+    sp.position.set(0, 2.55, 0);
+    sp.scale.set(0.95, 1.45, 1);
+    lanternG.add(sp);
+    animatedWindSprites.push({ sprite: sp, baseScale: 0.95, speed: 2.8 + Math.random(), phase: Math.random() * 6.28 });
+
+    const lLight = new THREE.PointLight(0x00ffaa, 1.35, 6.5);
+    lLight.position.set(0, 2.55, 0);
+    lanternG.add(lLight);
+
+    windGateGroup.add(lanternG);
+});
+
+// (D) 風元素獨角獸中央三層碧玉息吹祭壇與雙層旋轉風輪法陣
+const windAltarGroup = new THREE.Group();
+windDomainGroup.add(windAltarGroup);
+
+const windAltarHit = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.4, 1.8, 3.4, 12),
+    new THREE.MeshBasicMaterial({ visible: false })
+);
+windAltarHit.position.y = 1.7;
+windAltarHit.userData = { station: 'wind_domain' };
+interactables.push(windAltarHit);
+windAltarGroup.add(windAltarHit);
+
+const windTier1 = new THREE.Mesh(new THREE.CylinderGeometry(3.3, 3.65, 0.38, 24), paleJadeMat);
+windTier1.position.y = 0.19;
+const windTier1Trim = new THREE.Mesh(new THREE.TorusGeometry(3.66, 0.07, 10, 36), windGoldMat);
+windTier1Trim.position.y = 0.36;
+windTier1Trim.rotation.x = Math.PI / 2;
+
+const windTier2 = new THREE.Mesh(new THREE.CylinderGeometry(2.45, 2.75, 0.34, 24), deepJadeMat);
+windTier2.position.y = 0.55;
+const windTier2Trim = new THREE.Mesh(new THREE.TorusGeometry(2.76, 0.06, 10, 32), windGoldMat);
+windTier2Trim.position.y = 0.70;
+windTier2Trim.rotation.x = Math.PI / 2;
+
+const windTier3 = new THREE.Mesh(new THREE.CylinderGeometry(1.75, 1.95, 0.32, 24), paleJadeMat);
+windTier3.position.y = 0.88;
+const windTier3Trim = new THREE.Mesh(new THREE.TorusGeometry(1.96, 0.05, 10, 28), mintSilverMat);
+windTier3Trim.position.y = 1.02;
+windTier3Trim.rotation.x = Math.PI / 2;
+
+windAltarGroup.add(windTier1, windTier1Trim, windTier2, windTier2Trim, windTier3, windTier3Trim);
+
+// 雙層旋轉風輪法陣
+const windSpiralRing1 = new THREE.Mesh(
+    new THREE.RingGeometry(3.6, 3.82, 36),
+    new THREE.MeshBasicMaterial({
+        color: 0x69f0ae,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.85,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    })
+);
+windSpiralRing1.rotation.x = -Math.PI / 2;
+windSpiralRing1.position.y = 0.06;
+windDomainGroup.add(windSpiralRing1);
+
+const windSpiralRing2 = new THREE.Mesh(
+    new THREE.RingGeometry(4.6, 4.82, 12),
+    new THREE.MeshBasicMaterial({
+        color: 0x00e676,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.65,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    })
+);
+windSpiralRing2.rotation.x = -Math.PI / 2;
+windSpiralRing2.position.y = 0.05;
+windDomainGroup.add(windSpiralRing2);
+
+// (E) 8 座環繞祭壇的「碧玉流風靈柱」
+for (let p = 0; p < 8; p++) {
+    const ang = (p / 8) * Math.PI * 2;
+    const px = Math.cos(ang) * 4.2;
+    const pz = Math.sin(ang) * 4.2;
+
+    const pillarG = new THREE.Group();
+    pillarG.position.set(px, 0, pz);
+
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.46, 0.42, 12), deepJadeMat);
+    base.position.y = 0.21;
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 2.6, 12), windPillarMat);
+    body.position.y = 1.62;
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.26, 0.36, 12), paleJadeMat);
+    cap.position.y = 3.05;
+
+    const ringM = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.05, 8, 16), mintSilverMat);
+    ringM.position.y = 2.45;
+    ringM.rotation.x = Math.PI / 2;
+    pillarG.add(base, body, cap, ringM);
+
+    const spMat = new THREE.SpriteMaterial({
+        map: windPearlTex,
+        color: 0x80ffe0,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+    const sp = new THREE.Sprite(spMat);
+    sp.position.set(0, 3.65, 0);
+    sp.scale.set(1.05, 1.55, 1);
+    pillarG.add(sp);
+    animatedWindSprites.push({ sprite: sp, baseScale: 1.05, speed: 2.5 + Math.random() * 0.8, phase: p * 0.78 });
+
+    windDomainGroup.add(pillarG);
+}
+
+// (F) 2.5D「蒼穹靈風獨角獸」像素級風元素神獸煉成
+const windUnicornGroup = new THREE.Group();
+windUnicornGroup.position.set(0, 1.00, 0);
+windAltarGroup.add(windUnicornGroup);
+
+const windCardGeo = new THREE.PlaneGeometry(1, 1);
+windCardGeo.translate(0, 0.5, 0);
+
+const windUnicornMat = new THREE.MeshBasicMaterial({
+    transparent: true,
+    side: THREE.DoubleSide,
+    alphaTest: 0.02,
+    depthWrite: false
+});
+const windUnicornMesh = new THREE.Mesh(windCardGeo, windUnicornMat);
+windUnicornMesh.scale.set(3.55, 3.55, 1);
+windUnicornGroup.add(windUnicornMesh);
+
+const windHaloMat = new THREE.SpriteMaterial({
+    map: glowDotTex,
+    color: 0x00ffaa,
+    transparent: true,
+    opacity: 0.52,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+});
+const windHaloSprite = new THREE.Sprite(windHaloMat);
+windHaloSprite.scale.set(4.2, 4.2, 1);
+windHaloSprite.position.set(0, 1.75, -0.18);
+windUnicornGroup.add(windHaloSprite);
+
+function build3DRenderedWindUnicorn(img) {
+    const maxDim = 800;
+    let w = img.naturalWidth || img.width || 512;
+    let h = img.naturalHeight || img.height || 512;
+    if (w > maxDim || h > maxDim) {
+        if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+        } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+        }
+    }
+
+    const outCanvas = document.createElement('canvas');
+    outCanvas.width = w;
+    outCanvas.height = h;
+    const ctx = outCanvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+
+    try {
+        const effThresh = 82;
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const d = imgData.data;
+        const visited = new Uint8Array(w * h);
+        const queue = new Int32Array(w * h);
+        let head = 0, tail = 0;
+
+        const isBgOrShadow = (p) => {
+            const r = d[p], g = d[p + 1], b = d[p + 2];
+            const maxC = Math.max(r, g, b);
+            if (maxC <= effThresh) return true;
+            const sat = maxC - Math.min(r, g, b);
+            if (maxC <= effThresh + 24 && sat < 28) return true;
+            return false;
+        };
+
+        for (let x = 0; x < w; x++) {
+            const pTop = x * 4;
+            if (isBgOrShadow(pTop)) { visited[x] = 1; queue[tail++] = x; }
+            const pBot = ((h - 1) * w + x) * 4;
+            if (isBgOrShadow(pBot)) { visited[(h - 1) * w + x] = 1; queue[tail++] = (h - 1) * w + x; }
+        }
+        for (let y = 0; y < h; y++) {
+            const pLeft = y * w * 4;
+            if (!visited[y * w] && isBgOrShadow(pLeft)) { visited[y * w] = 1; queue[tail++] = y * w; }
+            const pRight = (y * w + w - 1) * 4;
+            if (!visited[y * w + w - 1] && isBgOrShadow(pRight)) { visited[y * w + w - 1] = 1; queue[tail++] = y * w + w - 1; }
+        }
+
+        while (head < tail) {
+            const idx = queue[head++];
+            const cx = idx % w;
+            const cy = Math.floor(idx / w);
+            d[idx * 4 + 3] = 0;
+
+            const neighbors = [
+                cy > 0 ? idx - w : -1,
+                cy < h - 1 ? idx + w : -1,
+                cx > 0 ? idx - 1 : -1,
+                cx < w - 1 ? idx + 1 : -1
+            ];
+            for (let n = 0; n < 4; n++) {
+                const nIdx = neighbors[n];
+                if (nIdx >= 0 && !visited[nIdx]) {
+                    if (isBgOrShadow(nIdx * 4)) {
+                        visited[nIdx] = 1;
+                        queue[tail++] = nIdx;
+                    }
+                }
+            }
+        }
+
+        const distMap = new Uint8Array(w * h);
+        let currentRing = [];
+        for (let i = 0; i < w * h; i++) {
+            if (visited[i]) continue;
+            const cx = i % w;
+            const cy = Math.floor(i / w);
+            const isBorder = (cx > 0 && visited[i - 1]) ||
+                             (cx < w - 1 && visited[i + 1]) ||
+                             (cy > 0 && visited[i - w]) ||
+                             (cy < h - 1 && visited[i + w]);
+            if (isBorder) {
+                distMap[i] = 1;
+                currentRing.push(i);
+            }
+        }
+        for (let step = 2; step <= 5; step++) {
+            const nextRing = [];
+            for (let k = 0; k < currentRing.length; k++) {
+                const idx = currentRing[k];
+                const cx = idx % w;
+                const cy = Math.floor(idx / w);
+                const nbs = [
+                    cx > 0 ? idx - 1 : -1,
+                    cx < w - 1 ? idx + 1 : -1,
+                    cy > 0 ? idx - w : -1,
+                    cy < h - 1 ? idx + w : -1
+                ];
+                for (let n = 0; n < 4; n++) {
+                    const nIdx = nbs[n];
+                    if (nIdx >= 0 && !visited[nIdx] && distMap[nIdx] === 0) {
+                        distMap[nIdx] = step;
+                        nextRing.push(nIdx);
+                    }
+                }
+            }
+            currentRing = nextRing;
+        }
+
+        // 風元素神獸色彩煉成：將鬃尾轉為翡翠碧玉綠 × 薄荷青嵐 × 極光仙金漸層
+        const featherSpan = 72;
+        const featherMax = effThresh + featherSpan;
+
+        for (let i = 0; i < w * h; i++) {
+            if (visited[i]) continue;
+            const p = i * 4;
+            let r = d[p], g = d[p + 1], b = d[p + 2];
+            const maxC = Math.max(r, g, b);
+            const minC = Math.min(r, g, b);
+            const sat = maxC - minC;
+            const lum = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+
+            const dist = distMap[i];
+            if (dist > 0 && maxC < featherMax) {
+                let ratio = Math.max(0, (maxC - effThresh) / featherSpan);
+                ratio = Math.pow(ratio, dist === 1 ? 1.85 : 1.35);
+                d[p + 3] = Math.floor(ratio * 255);
+                if (d[p + 3] > 8 && maxC > 10) {
+                    const lift = Math.min(2.4, 215 / Math.max(65, maxC));
+                    r = Math.min(255, Math.round(r * lift));
+                    g = Math.min(255, Math.round(g * lift));
+                    b = Math.min(255, Math.round(b * lift));
+                }
+            }
+
+            if (d[p + 3] === 0) continue;
+
+            // (A) 眼眸深處：化為碧玉靈風神瞳
+            if (maxC < 145 && lum < 0.48) {
+                const eyeT = maxC / 145;
+                d[p] = Math.min(255, Math.round(10 + eyeT * 40));
+                d[p + 1] = Math.min(255, Math.round(180 + eyeT * 70));
+                d[p + 2] = Math.min(255, Math.round(120 + eyeT * 100));
+                continue;
+            }
+
+            // (B) 鬃毛、長尾與獨角：化為翡翠碧綠 -> 薄荷仙青 -> 蒼穹極光白綠
+            const isCoolOrPastelMane = b > r + 6 || g > r + 6 || r - g > 18 || sat > 16;
+            if (isCoolOrPastelMane) {
+                const colorWeight = Math.min(1, Math.max(0.38, sat / 52));
+                let wr, wg, wb;
+                if (lum < 0.55) {
+                    const t = lum / 0.55;
+                    wr = 10 + t * 30;
+                    wg = 175 + t * 70;
+                    wb = 110 + t * 70;
+                } else if (lum < 0.82) {
+                    const t = (lum - 0.55) / 0.27;
+                    wr = 40 + t * 90;
+                    wg = 245 + t * 10;
+                    wb = 180 + t * 65;
+                } else {
+                    const t = (lum - 0.82) / 0.18;
+                    wr = 140 + t * 110;
+                    wg = 255;
+                    wb = 220 + t * 35;
+                }
+                d[p] = Math.min(255, Math.round(r * (1 - colorWeight) * 0.72 + wr * colorWeight));
+                d[p + 1] = Math.min(255, Math.round(g * (1 - colorWeight) * 0.95 + wg * colorWeight));
+                d[p + 2] = Math.min(255, Math.round(b * (1 - colorWeight) + wb * colorWeight));
+            } else {
+                // (C) 身軀毛皮：仙氣青白羽光，暗部透出翡翠碧靈光澤
+                const shadowCool = Math.pow(1 - lum, 1.35);
+                d[p] = Math.min(255, Math.round(r * 0.88 - shadowCool * 30));
+                d[p + 1] = Math.min(255, Math.round(g * 1.05 + shadowCool * 35));
+                d[p + 2] = Math.min(255, Math.round(b * 0.95 + shadowCool * 20));
+            }
+
+            if (dist > 0) {
+                const rim = (5 - dist) * 0.18;
+                d[p] = Math.max(0, Math.round(d[p] * (1 - rim * 0.3)));
+                d[p + 1] = Math.min(255, Math.round(d[p + 1] + (255 - d[p + 1]) * rim));
+                d[p + 2] = Math.min(255, Math.round(d[p + 2] + (235 - d[p + 2]) * rim));
+            }
+        }
+
+        let maxOpaqueY = -1;
+        for (let y = h - 1; y >= 0; y--) {
+            let hasHoof = false;
+            for (let x = 0; x < w; x++) {
+                if (d[(y * w + x) * 4 + 3] > 60) {
+                    hasHoof = true;
+                    break;
+                }
+            }
+            if (hasHoof) {
+                maxOpaqueY = y;
+                break;
+            }
+        }
+        if (maxOpaqueY > 0 && maxOpaqueY < h - 1) {
+            const shiftY = (h - 1) - maxOpaqueY;
+            for (let y = h - 1; y >= shiftY; y--) {
+                const srcY = y - shiftY;
+                for (let x = 0; x < w; x++) {
+                    const toIdx = (y * w + x) * 4;
+                    const fromIdx = (srcY * w + x) * 4;
+                    d[toIdx] = d[fromIdx];
+                    d[toIdx + 1] = d[fromIdx + 1];
+                    d[toIdx + 2] = d[fromIdx + 2];
+                    d[toIdx + 3] = d[fromIdx + 3];
+                }
+            }
+            for (let y = 0; y < shiftY; y++) {
+                for (let x = 0; x < w; x++) {
+                    d[(y * w + x) * 4 + 3] = 0;
+                }
+            }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+
+        // 繪製風元素 8 芒羽翼神聖星盤光輪
+        const haloC = document.createElement('canvas');
+        haloC.width = 512;
+        haloC.height = 512;
+        const hCtx = haloC.getContext('2d');
+        const hcx = 256, hcy = 256;
+
+        const hGrad = hCtx.createRadialGradient(hcx, hcy, 24, hcx, hcy, 230);
+        hGrad.addColorStop(0.0, 'rgba(220, 255, 240, 0.95)');
+        hGrad.addColorStop(0.35, 'rgba(105, 255, 205, 0.75)');
+        hGrad.addColorStop(0.70, 'rgba(0, 195, 140, 0.42)');
+        hGrad.addColorStop(1.0, 'rgba(0, 45, 30, 0.0)');
+        hCtx.fillStyle = hGrad;
+        hCtx.beginPath();
+        hCtx.arc(hcx, hcy, 230, 0, Math.PI * 2);
+        hCtx.fill();
+
+        for (let f = 0; f < 8; f++) {
+            const fa = (f / 8) * Math.PI * 2;
+            hCtx.save();
+            hCtx.translate(hcx, hcy);
+            hCtx.rotate(fa);
+            hCtx.fillStyle = 'rgba(180, 255, 230, 0.65)';
+            hCtx.beginPath();
+            hCtx.ellipse(120, 0, 85, 24, 0.15, 0, Math.PI * 2);
+            hCtx.fill();
+            hCtx.restore();
+        }
+
+        const hTex = new THREE.CanvasTexture(haloC);
+        hTex.encoding = THREE.sRGBEncoding;
+        windHaloSprite.material.map = hTex;
+        windHaloSprite.material.needsUpdate = true;
+
+        const tex = new THREE.CanvasTexture(outCanvas);
+        tex.encoding = THREE.sRGBEncoding;
+        windUnicornMat.map = tex;
+        windUnicornMat.needsUpdate = true;
+
+        const aspect = w / h;
+        windUnicornMesh.scale.set(3.55 * aspect, 3.55, 1);
+    } catch (e) {
+        console.warn('Wind unicorn render fallback:', e);
+    }
+}
+
+// 載入 assets/unicorn.jpg 並即時煉成為 3D 蒼穹靈風獨角獸
+const windImgLoader = new Image();
+windImgLoader.crossOrigin = 'anonymous';
+windImgLoader.onload = () => build3DRenderedWindUnicorn(windImgLoader);
+windImgLoader.src = 'assets/unicorn.jpg';
+
+const windDomainLight = new THREE.PointLight(0x00ffaa, 2.6, 18.0);
+windDomainLight.position.set(0, 3.6, 0);
+windDomainGroup.add(windDomainLight);
+
+// (G) 環繞風元素領域的 10 棵「青鸞翡翠搖風古樹」與 12 簇「天青翡翠風晶簇」
+const windBarkMat = new THREE.MeshStandardMaterial({
+    color: 0x184435,
+    roughness: 0.65
+});
+const windFoliageMats = [
+    new THREE.MeshStandardMaterial({
+        color: 0x1abc9c,
+        emissive: 0x005533,
+        emissiveIntensity: 0.35,
+        roughness: 0.38
+    }),
+    new THREE.MeshStandardMaterial({
+        color: 0x2ecc71,
+        emissive: 0x006644,
+        emissiveIntensity: 0.38,
+        roughness: 0.35
+    }),
+    new THREE.MeshStandardMaterial({
+        color: 0x69f0ae,
+        emissive: 0x008855,
+        emissiveIntensity: 0.42,
+        roughness: 0.32
+    })
+];
+
+function buildWindElementTree(seed = 0) {
+    const tree = new THREE.Group();
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.45, 3.4, 8), windBarkMat);
+    trunk.position.y = 1.7;
+    tree.add(trunk);
+
+    const fMat = windFoliageMats[seed % windFoliageMats.length];
+    const canopyOffsets = [
+        [0, 3.2, 0, 1.45],
+        [0.65, 3.65, 0.45, 1.15],
+        [-0.65, 3.55, -0.45, 1.2],
+        [0.45, 4.15, -0.35, 1.05],
+        [-0.4, 4.25, 0.4, 1.0]
+    ];
+    canopyOffsets.forEach(([ox, oy, oz, r]) => {
+        const cSphere = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 1), fMat);
+        cSphere.position.set(ox, oy, oz);
+        cSphere.scale.set(1.15, 0.88, 1.15);
+        tree.add(cSphere);
+    });
+
+    return tree;
+}
+
+for (let wt = 0; wt < 10; wt++) {
+    const wa = (wt / 10) * Math.PI * 2 + (wt % 2) * 0.18;
+    const wr = 6.4 + (wt % 3) * 1.35;
+    const wx = Math.cos(wa) * wr;
+    const wz = Math.sin(wa) * wr;
+
+    // 避開正南入口走廊
+    if (Math.abs(wx) < 3.2 && wz > 4.5) continue;
+
+    const windTree = buildWindElementTree(wt);
+    windTree.position.set(wx, 0, wz);
+    windTree.scale.setScalar(0.95 + (wt % 3) * 0.18);
+    windTree.rotation.y = wt * 1.1;
+    windDomainGroup.add(windTree);
+}
+
+// 12 簇天青翡翠晶簇
+const windCrystalMat = new THREE.MeshStandardMaterial({
+    color: 0x69f0ae,
+    emissive: 0x00cc77,
+    emissiveIntensity: 0.9,
+    roughness: 0.18,
+    metalness: 0.45
+});
+for (let c = 0; c < 12; c++) {
+    const ca = (c / 12) * Math.PI * 2 + 0.15;
+    const cr = 4.8 + (c % 2) * 1.7;
+    const cx = Math.cos(ca) * cr;
+    const cz = Math.sin(ca) * cr;
+
+    if (Math.abs(cx) < 2.5 && cz > 3.8) continue;
+
+    const cCluster = new THREE.Group();
+    cCluster.position.set(cx, 0, cz);
+
+    const numSpikes = 3 + (c % 3);
+    for (let s = 0; s < numSpikes; s++) {
+        const h = 0.55 + Math.random() * 0.65;
+        const rad = 0.08 + Math.random() * 0.06;
+        const spike = new THREE.Mesh(new THREE.ConeGeometry(rad, h, 6), windCrystalMat);
+        spike.position.set((Math.random() - 0.5) * 0.35, h * 0.5, (Math.random() - 0.5) * 0.35);
+        spike.rotation.set((Math.random() - 0.5) * 0.4, Math.random() * Math.PI, (Math.random() - 0.5) * 0.4);
+        cCluster.add(spike);
+    }
+    windDomainGroup.add(cCluster);
+}
+
+// (H) 風元素領域漫天升騰的 130 顆流風羽毛與蒲公英星塵粒子 (Wind Feathers)
+const windFeatherCount = 130;
+const windGeo = new THREE.BufferGeometry();
+const windPos = new Float32Array(windFeatherCount * 3);
+const windVel = [];
+for (let i = 0; i < windFeatherCount; i++) {
+    const ang = Math.random() * Math.PI * 2;
+    const r = Math.random() * 7.5;
+    windPos[i * 3] = Math.cos(ang) * r;
+    windPos[i * 3 + 1] = Math.random() * 4.6;
+    windPos[i * 3 + 2] = Math.sin(ang) * r;
+    windVel.push({
+        angle: ang,
+        radius: r,
+        vY: 0.4 + Math.random() * 0.65,
+        rotSpeed: 0.45 + Math.random() * 0.55,
+        drift: Math.random() * 6.28
+    });
+}
+windGeo.setAttribute('position', new THREE.BufferAttribute(windPos, 3));
+const windParticles = new THREE.Points(
+    windGeo,
+    new THREE.PointsMaterial({
+        size: 0.17,
+        map: glowDotTex,
+        color: 0x99ffe0,
+        transparent: true,
+        opacity: 0.85,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    })
+);
+windDomainGroup.add(windParticles);
+
+// (I) 蒼穹靈風獨角獸「息吹靈風覺醒」爆發動畫控制器 (windDomainFX)
+const windAwakeningRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.8, 1.35, 36),
+    new THREE.MeshBasicMaterial({
+        color: 0x69f0ae,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    })
+);
+windAwakeningRing.rotation.x = -Math.PI / 2;
+windAwakeningRing.position.y = 0.95;
+windAwakeningRing.visible = false;
+windDomainGroup.add(windAwakeningRing);
+
+const windDomainFX = {
+    active: false,
+    timer: 0,
+    duration: 2.8,
+    triggerAwakening() {
+        this.active = true;
+        this.timer = 0;
+        windAwakeningRing.visible = true;
+        windAwakeningRing.scale.setScalar(0.5);
+        windAwakeningRing.material.opacity = 1.0;
+    },
+    update(delta, elapsed) {
+        if (!this.active) return;
+        this.timer += delta;
+        const p = Math.min(1, this.timer / this.duration);
+        windAwakeningRing.scale.setScalar(0.5 + p * 6.5);
+        windAwakeningRing.position.y = 0.95 + Math.sin(p * Math.PI) * 1.6;
+        windAwakeningRing.material.opacity = (1 - p) * 0.95;
+
+        windDomainLight.intensity = 2.6 + Math.sin(p * Math.PI) * 4.2;
+        windHaloSprite.scale.setScalar(4.2 + Math.sin(p * Math.PI) * 2.6);
+        windUnicornGroup.position.y = 1.00 + Math.sin(p * Math.PI) * 0.18;
+
+        if (p >= 1) {
+            this.active = false;
+            windAwakeningRing.visible = false;
+            windDomainLight.intensity = 2.6;
+        }
+    }
+};
+let heroInWindDomain = false;
+
 // 森林螢火蟲
 const fireflyCount = 130;
 const ffGeo = new THREE.BufferGeometry();
@@ -3282,7 +4118,16 @@ function optimizeSanctuaryDrawCalls() {
         waterAltarHit,
         wTier1,
         wTier2,
-        wTier3
+        wTier3,
+        windGround,
+        windSpiralRing1,
+        windSpiralRing2,
+        windAwakeningRing,
+        windUnicornMesh,
+        windAltarHit,
+        windTier1,
+        windTier2,
+        windTier3
     ]);
 
     const targetGroups = [
@@ -3291,7 +4136,9 @@ function optimizeSanctuaryDrawCalls() {
         flameGateGroup,
         fireDomainGroup,
         waterGateGroup,
-        waterDomainGroup
+        waterDomainGroup,
+        windGateGroup,
+        windDomainGroup
     ];
     const tmpPos = new THREE.Vector3();
     const tmpScale = new THREE.Vector3();
@@ -3470,6 +4317,7 @@ const oracleSystem = new OracleSystem({
     wishTreeFX,
     fireDomainFX,
     waterDomainFX,
+    windDomainFX,
     setCameraTarget
 });
 
@@ -3522,8 +4370,8 @@ window.addEventListener('pointerup', (e) => {
         }
     }
 
-    // 3. 點擊森林草地、赤焰熔岩大地或琉璃星海大地：讓男女主角自由走過去
-    const floorHits = raycaster.intersectObjects([waterGround, fireGround, floor]);
+    // 3. 點擊森林草地、赤焰熔岩大地、琉璃星海大地或蒼穹靈風大地：讓男女主角自由走過去
+    const floorHits = raycaster.intersectObjects([windGround, waterGround, fireGround, floor]);
     if (floorHits.length > 0) {
         closeAllModals();
         hero.walkTo(floorHits[0].point);
@@ -3592,10 +4440,18 @@ function animate() {
         heroInWaterDomain = false;
     }
 
-    // 2. 若勾選「鏡頭跟隨主角」，視角焦點平滑跟隨主角移動（走進赤焰或琉璃水領域時自動延伸視角）
+    const distToWindDomain = Math.hypot(hero.root.position.x - 0.0, hero.root.position.z - (-23.5));
+    if (distToWindDomain < 8.6 && !heroInWindDomain) {
+        heroInWindDomain = true;
+        showToast('🍃 已踏入【蒼穹靈風・風元素領域】！浩瀚長風與翡翠符文正在滌蕩您的思緒');
+    } else if (distToWindDomain > 9.4 && heroInWindDomain) {
+        heroInWindDomain = false;
+    }
+
+    // 2. 若勾選「鏡頭跟隨主角」，視角焦點平滑跟隨主角移動（走進赤焰、琉璃水或蒼穹風領域時自動延伸視角）
     const followEl = document.getElementById('camFollowHero');
     if (followEl && followEl.checked && !camTargetPos) {
-        const ratio = heroInFireDomain || heroInWaterDomain ? 0.88 : 0.65;
+        const ratio = heroInFireDomain || heroInWaterDomain || heroInWindDomain ? 0.88 : 0.65;
         const targetLook = new THREE.Vector3(hero.root.position.x * ratio, 1.45, hero.root.position.z * ratio);
         controls.target.lerp(targetLook, Math.min(1, delta * 5.0));
     }
@@ -3680,6 +4536,37 @@ function animate() {
     wbAttr.needsUpdate = true;
 
     waterDomainFX.update(delta, elapsed);
+
+    // 3.7 更新 🍃 蒼穹靈風・風元素領域（2.5D 靈風神獸精準水平 Billboard、靈風靈珠呼吸、風輪法陣與螺旋升騰羽毛星塵）
+    if (!windDomainFX.active) {
+        windUnicornGroup.position.y = 1.00;
+        windHaloSprite.scale.setScalar(4.2 + Math.sin(elapsed * 2.8) * 0.32);
+    }
+    windUnicornGroup.rotation.y = Math.atan2(camera.position.x - 0.0, camera.position.z - (-23.5));
+    windSpiralRing1.rotation.z = elapsed * 0.42;
+    windSpiralRing2.rotation.z = -elapsed * 0.55;
+    windGroundMat.emissiveIntensity = 0.36 + Math.sin(elapsed * 2.4) * 0.10;
+
+    for (let i = 0; i < animatedWindSprites.length; i++) {
+        const item = animatedWindSprites[i];
+        const s = item.baseScale + Math.sin(elapsed * item.speed + item.phase) * 0.12;
+        item.sprite.scale.set(s, s * 1.48, 1);
+    }
+
+    const windAttr = windGeo.attributes.position;
+    for (let i = 0; i < windFeatherCount; i++) {
+        const v = windVel[i];
+        v.angle += delta * v.rotSpeed;
+        const curR = v.radius + Math.sin(elapsed * 2.2 + v.drift) * 0.35;
+        let py = windPos[i * 3 + 1] + delta * v.vY;
+        if (py > 5.2) py = 0.1;
+        windPos[i * 3] = Math.cos(v.angle) * curR;
+        windPos[i * 3 + 1] = py;
+        windPos[i * 3 + 2] = Math.sin(v.angle) * curR;
+    }
+    windAttr.needsUpdate = true;
+
+    windDomainFX.update(delta, elapsed);
 
     // 4. 更新神諭浮空卡牌陣、抽牌變色飛升動畫與飛行中的祈願星果光球
     oracleSystem.update(delta, elapsed);

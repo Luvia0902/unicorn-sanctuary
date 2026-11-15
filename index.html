@@ -106,6 +106,9 @@
             <button class="nav-btn"
                 style="border-color:rgba(0,215,255,0.75); color:#99f2ff; background:linear-gradient(135deg,rgba(0,95,160,0.48),rgba(5,28,58,0.68));"
                 onclick="commandHeroToStation('water_domain')">💧 琉璃水領域</button>
+            <button class="nav-btn"
+                style="border-color:rgba(0,255,180,0.75); color:#a6ffe0; background:linear-gradient(135deg,rgba(0,140,95,0.48),rgba(4,40,28,0.68));"
+                onclick="commandHeroToStation('wind_domain')">🍃 蒼穹風領域</button>
             <button class="nav-btn" onclick="triggerDewOffering()">✨ 獻上晨露</button>
         </div>
         <button id="navDockToggleBtn" class="nav-collapse-btn" title="收合或展開下方導覽列"
@@ -219,6 +222,29 @@
         </div>
     </div>
 
+    <!-- 彈窗 7：風元素獨角獸領域（蒼穹聖殿・思維通透與自由賜福） -->
+    <div id="modalWindDomain" class="modal-card"
+        style="border-color: rgba(0, 255, 180, 0.78); box-shadow: 0 18px 50px rgba(0, 180, 120, 0.45);">
+        <span class="close-x" onclick="closeAllModals()">✕</span>
+        <div class="oracle-badge" style="background: linear-gradient(90deg, #00e676, #69f0ae); color:#022618;">🍃
+            風元素聖域・蒼穹靈風獨角獸</div>
+        <div class="modal-title" style="color: #69f0ae;">🌀 息吹聖壇・靈風自由共鳴</div>
+        <div class="modal-desc" id="windDomainDesc">
+            主角已踏入以風元素構築的北側「蒼穹靈風・風元素領域」。此處由碧玉八卦風輪、八座流風靈柱、青鸞翡翠搖風古樹與漫天飛舞的流風羽毛環繞，掌管**「思維通透清晰、放下執念包袱、自由隨心與敏捷御風」**。<br><br>
+            請點擊下方按鈕，祈請蒼穹靈風獨角獸降下**「息吹靈風覺醒儀式」**：
+        </div>
+        <div id="windBlessingQuote" class="oracle-quote"
+            style="display:none; border-left-color:#00e676; background:rgba(0, 230, 118, 0.14); color:#b9f6ca;">
+        </div>
+        <div style="margin-top: 14px;">
+            <button class="action-btn"
+                style="background: linear-gradient(135deg, #00e676, #69f0ae); color:#022618; box-shadow: 0 4px 18px rgba(0, 230, 118, 0.5);"
+                onclick="triggerWindUnicornAwakening()">🍃 喚醒長空靈風・祈請通透賜福</button>
+            <button class="action-btn secondary" onclick="commandHeroToStation('sanctuary')">🌙 返回月光主聖域</button>
+            <button class="action-btn secondary" onclick="closeAllModals()">在風之領域漫步</button>
+        </div>
+    </div>
+
     <!-- 防黑屏檢核 1：全域錯誤攔截器 -->
     <script>
         window.addEventListener('error', function (e) {
@@ -235,7 +261,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <!-- 原生 ES Modules 主程式入口 -->
-    <script type="module" src="js/main.js?v=20261115_10"></script>
+    <script type="module" src="js/main.js?v=20261115_12"></script>
 </body>
 
 </html>

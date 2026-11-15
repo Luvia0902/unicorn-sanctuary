@@ -17,8 +17,8 @@ export class SanctuaryAudio {
         this.isPlaying = false;
         this.usingCustomMp3 = false;
 
-        // 1. 主配樂 (bgmAudio) — 預設先指向無版權真實鋼琴曲，避免無 bgm.mp3 時因 404 非同步錯誤而喪失瀏覽器點擊播放權限
-        this.bgmAudio = new Audio(FALLBACK_PIANO_URL);
+        // 1. 主配樂 (bgmAudio) — 直接載入專案內建真實鋼琴曲 bgm.mp3（同網域零延遲、不被外部防盜連阻擋）
+        this.bgmAudio = new Audio('bgm.mp3');
         this.bgmAudio.loop = true;
         this.bgmAudio.preload = 'auto';
         this.bgmAudio.volume = 0.65;
@@ -46,11 +46,16 @@ export class SanctuaryAudio {
             }
         });
 
-        // 2. 森林環境音 (forestNatureAudio)
-        this.forestNatureAudio = new Audio(FOREST_STREAM_URL);
+        // 2. 森林環境音 (forestNatureAudio) — 優先載入專案內建溪流環境音 assets/audio/wish_pool.mp3
+        this.forestNatureAudio = new Audio('assets/audio/wish_pool.mp3');
         this.forestNatureAudio.loop = true;
         this.forestNatureAudio.preload = 'auto';
         this.forestNatureAudio.volume = 0.22;
+        this.forestNatureAudio.addEventListener('error', () => {
+            if (this.forestNatureAudio.src && !this.forestNatureAudio.src.includes('actions.google.com')) {
+                this.forestNatureAudio.src = FOREST_STREAM_URL;
+            }
+        });
     }
 
     async init() {
@@ -58,7 +63,7 @@ export class SanctuaryAudio {
         this._bindAutoPlayUnlock();
         this._updateButtonUI();
 
-        // 1. 優先檢查 Unicorn25D_DB 的 store 是否有 'custom_bgm_mp3'
+        // 優先檢查 Unicorn25D_DB 的 store 是否有 'custom_bgm_mp3'
         let customDataUrl = null;
         if (this.unicorn && typeof this.unicorn.loadAudioFromIndexedDB === 'function') {
             customDataUrl = await this.unicorn.loadAudioFromIndexedDB();
@@ -70,22 +75,6 @@ export class SanctuaryAudio {
             if (this.isPlaying) {
                 this.bgmAudio.play().catch(() => {});
             }
-            return;
-        }
-
-        // 2. 檢查同資料夾是否存在真實的 bgm.mp3（避免 404 導致瀏覽器阻擋自動播放）
-        try {
-            const res = await fetch('bgm.mp3', { method: 'HEAD' });
-            const contentType = (res.headers.get('content-type') || '').toLowerCase();
-            if (res.ok && !contentType.includes('text/html')) {
-                this.usingCustomMp3 = false;
-                this.bgmAudio.src = 'bgm.mp3';
-                if (this.isPlaying) {
-                    this.bgmAudio.play().catch(() => {});
-                }
-            }
-        } catch (e) {
-            // 無本地 bgm.mp3 時維持使用 FALLBACK_PIANO_URL
         }
     }
 
