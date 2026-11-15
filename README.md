@@ -1,0 +1,104 @@
+# 🌙 月光森林・獨角獸心安聖域 (Moonlight Forest — Unicorn Sanctuary)
+
+> **東方主角自由漫步 × 2.5D 智慧去背守護獨角獸 × 心安宮五步神諭儀式 × 赤焰獨角獸領域**
+>
+> GitHub Repository: [https://github.com/Luvia0902/unicorn-sanctuary.git](https://github.com/Luvia0902/unicorn-sanctuary.git)
+
+---
+
+## ✨ 專案簡介
+
+**《月光森林・獨角獸心安聖域》** 是一座結合 **Three.js 3D 奇幻月光森林**、**2.5D 高精細去背立繪渲染** 與 **東方祈願問事儀式** 的沉浸式療癒互動網頁應用。無須安裝任何打包工具或伺服器後端，支援純前端 ES Modules 直接運行與單一 HTML 永久封裝下載。
+
+---
+
+## 🌟 核心特色與功能
+
+### 1. 🏛️ 心安宮五大療癒問事儀式 + 赤焰聖殿領域
+- **💧 許願星泉（稟報心事）**：提供「💖 心靈療癒與陪伴」、「🌟 事業與方向迷惘」、「🌸 感情與人際緣分」、「🍀 平安順遂祈福」四大祈願類別，將心願化為星光光球飛向主祭壇。
+- **🦄 聖壇共鳴（光之請示）**：佇立於白玉主祭壇前仰望守護獨角獸，透過黃金獨角星光共鳴（聖光共鳴／微風微笑）請示聖意。
+- **🃏 靈籤神諭（16 首分類專屬七言靈籤 ＆ 守護卡下載）**：
+  - 點擊 7 張環繞星台的浮空神諭卡，觸發**單張卡牌覺醒變色與螺旋星塵飛升動畫**。
+  - 內建 **16 首古風七言靈籤庫**（依許願星泉所選 4 大類別精準匹配，並附帶幸運色、吉方與開運微行動「✨ 開運星語」）。
+  - **📸 一鍵下載專屬神諭守護卡 (PNG)**：即時以 Canvas 繪製 `720 × 1200` 高解析度直式典藏守護卡（含極光星夜背景、燙金邊框、當前去背獨角獸立繪、籤詩、療癒指引、心願銘刻與賜福日期印記）。
+- **🌳 千年祈願靈樹（星果留存）**：將心願化為「祈願流蘇靈箋」拖曳螺旋星軌掛上千年櫻花靈樹，觸發靈樹黃金／櫻粉樹冠綻放與漫天櫻花星雨，並透過 `localStorage` 永久留存心願紀錄。
+- **🔥 赤焰獨角獸領域（火元素破局聖殿）**：踏過黑曜熔岩石橋與赤焰鳥居，進入由 8 座聖火石柱、紅蓮晶簇與赤焰古樹環繞的火元素領域，祈請赤焰獨角獸展開「太陽聖火覺醒儀式」。
+
+### 2. 👧👦 東方男女主角自由漫步 ＆ 4 套古風漢服換裝
+- **雙主角與三視角即時切換**：支援「東方女主角／東方男主角」，具備 **正面、側面（左右自動鏡像）、背面** 三視角精緻 Canvas 程序化立繪，支援滑鼠點擊地面自動尋路與鍵盤 `WASD` / 方向鍵自由漫步。
+- **👘 4 套古風漢服色系（自動記憶）**：
+  - 🌸 **櫻粉流仙**：桃花粉白漸層廣袖 × 流金滾邊 × 胭脂腰封與翠玉吊墜
+  - 🌙 **月白仙衣**：月華銀白與冰藍漸層 × 銀青滾邊 × 蒼藍腰封與冰晶靈玉
+  - 🌌 **玄金星袍**：玄夜紫黑星河漸層 × 璀璨赤金刺繡 × 紫金腰封與琥珀金玉
+  - 🔥 **赤焰戰袍**：朱砂赤紅烈焰漸層 × 流火金滾邊 × 玄紅束腰與太陽寶玉
+
+### 3. 🦄 2.5D 守護獨角獸智慧保眼去背 ＆ 永久封裝匯出
+- **Flood-Fill 智慧保眼去背演算法**：支援拖曳或選取任意獨角獸圖片（`image/*`），自動從四邊向內消除深色背景並柔化邊緣，100% 保護角色內部深邃眼眸不被誤挖空。
+- **💾 下載永久固定版 HTML**：可將當前自訂的獨角獸圖片連同完整場景一鍵打包為單一獨立 `.html` 檔案永久珍藏。
+
+### 4. 🎵 雙軌真實 HTML5 Audio 療癒配樂 ＆ IndexedDB 永久記憶
+- **雙軌混音播放**：
+  - **主配樂 (`bgmAudio`)**：優先讀取專案根目錄 `bgm.mp3`，若無則自動串流真實無版權鋼琴名曲（Erik Satie — *Gymnopédie No. 1*）。
+  - **森林環境音 (`forestNatureAudio`)**：同步疊加真實森林溪流白噪音，隨主音量滑桿智慧連動。
+- **🎧 自訂 MP3 永久記憶**：支援透過左上角按鈕或直接將 `.mp3 / .wav / .ogg / .m4a` 音檔**拖曳進瀏覽器視窗**，自動存入 `IndexedDB` (`Unicorn25D_DB`)，重新整理網頁後免重選直接播放。
+
+### 5. ⚡ 極致 3D 渲染效能優化（Draw Calls 降低 > 99%）
+- **靜態網格自動批次合併 (`mergeStaticBufferGeometries`)**：將全場景 236 棵 3D 分岔樹木、遠山、岩石、水晶、靈菇、石燈籠與聖火石柱（原約 `7,350+` 個獨立 Mesh）依材質自動合併為 19 個批次 `BufferGeometry`。
+- **硬體實例化葉團雲 (`THREE.InstancedMesh`)**：將約 `5,500` 團 2.5D 樹冠葉團雲轉為 24 個 `InstancedMesh` 批次，搭配相機四元數變動偵測，將全場景 WebGL Draw Calls 從 **`~12,900+` 次大幅降至 `~85` 次（降幅達 99.2%）**。
+
+---
+
+## 📂 專案目錄結構
+
+```text
+unicorn-sanctuary/
+├── index.html               # 主頁面入口（含左上角控制面板、五大儀式彈窗與全域防呆攔截器）
+├── README.md                # 專案說明文件
+├── css/
+│   └── style.css            # 聖域玻璃擬態 UI、神諭卡動效與響應式樣式表
+├── js/
+│   ├── main.js              # Three.js 3D 場景建構、火元素領域、Draw Call 批次優化引擎與主迴圈
+│   ├── Unicorn25D.js        # 2.5D 獨角獸 Flood-Fill 智慧保眼去背、IndexedDB 存取與單檔 HTML 匯出
+│   ├── EasternHero.js       # 東方男女主角三視角立繪、4 套古風漢服色系切換與移動控制器
+│   ├── OracleSystem.js      # 心安宮五步儀式、16 首分類靈籤庫與 720x1200 神諭守護卡 PNG 生成器
+│   └── SanctuaryAudio.js    # 雙軌真實 HTML5 Audio 播放器（鋼琴主配樂 + 森林溪流環境音 + MP3 記憶）
+└── assets/
+    ├── unicorn.jpg          # 預設守護獨角獸高解析立繪素材
+    └── audio/
+        └── README.txt       # 音訊素材放置說明
+```
+
+---
+
+## 🚀 快速啟動方式
+
+由於專案採用原生 ES Modules (`<script type="module">`)，請使用任一本地靜態伺服器開啟：
+
+### 方式一：使用 Python 內建伺服器（推薦）
+```bash
+cd unicorn-sanctuary
+python -m http.server 8080
+```
+接著於瀏覽器開啟：**[http://localhost:8080](http://localhost:8080)**
+
+### 方式二：使用 VS Code Live Server 或 Node.js `npx serve`
+```bash
+npx serve -l 8080
+```
+
+---
+
+## 📦 推送至 GitHub 儲存庫指令
+
+若要將本地專案推送至 [https://github.com/Luvia0902/unicorn-sanctuary.git](https://github.com/Luvia0902/unicorn-sanctuary.git)：
+
+```bash
+git init
+git add .
+git commit -m "feat: 完成月光森林獨角獸聖域（雙軌真實音樂、16首分類靈籤與守護卡下載、4套古風漢服、3D渲染效能優化）"
+git branch -M main
+git remote add origin https://github.com/Luvia0902/unicorn-sanctuary.git
+git push -u origin main
+```
+
+> 💡 **GitHub Pages 部署小提示**：推送完成後，可於 GitHub 儲存庫的 **Settings → Pages → Build and deployment** 中選擇 `Deploy from a branch`（`main` / `/ (root)`），即可直接透過 GitHub Pages 線上瀏覽整座獨角獸心安聖域！

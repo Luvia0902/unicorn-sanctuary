@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>2.5D 星光獨角獸（3D 魔法陣 + 2D 唯美立繪）</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #0d0f1a; font-family: sans-serif; }
+        #ui { position: absolute; top: 12px; left: 12px; color: white; background: rgba(10, 12, 24, 0.78); padding: 14px 18px; border-radius: 10px; border: 1px solid rgba(255, 215, 0, 0.3); line-height: 1.6; z-index: 5; backdrop-filter: blur(4px); }
+        .btn-upload { display: inline-block; margin-top: 8px; background: linear-gradient(135deg, #ffd700, #ffaa00); color: #111; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; pointer-events: auto; }
+        .btn-upload:hover { filter: brightness(1.1); }
+        #toggleBtn { position: absolute; top: 12px; right: 12px; z-index: 10; background: rgba(20, 24, 40, 0.85); color: #ffd700; border: 1px solid #ffd700; padding: 7px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        #panel { position: absolute; top: 50px; right: 12px; color: white; background: rgba(12, 14, 26, 0.88); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); width: 280px; font-size: 13px; display: block; z-index: 10; }
+        .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .row input[type="range"] { width: 120px; }
+        .val { width: 40px; text-align: right; color: #ffd700; }
+        #errorBox { position: absolute; bottom: 10px; left: 10px; right: 10px; background: rgba(180,0,0,0.9); color: #fff; padding: 10px; border-radius: 6px; font-size: 13px; display: none; z-index: 99; }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        ✨ <b>2.5D 星光獨角獸互動場景</b><br>
+        左鍵拖曳：360° 旋轉 3D 視角 ｜ 滾輪：縮放 ｜ 點擊地面：移動<br>
+        狀態: <span id="status" style="color:#ffd700; font-weight:bold;">星光待機中</span><br>
+        <label class="btn-upload">
+            🖼️ 換成自己的獨角獸圖片 (支援去背PNG/JPG)
+            <input type="file" id="imgInput" accept="image/*" style="display:none;">
+        </label>
+        <label style="margin-left:8px; font-size:12px; cursor:pointer;">
+            <input type="checkbox" id="autoRemoveBg" checked> 自動去除深色背景
+        </label>
+    </div>
+
+    <div id="errorBox"></div>
+
+    <button id="toggleBtn" onclick="const p = document.getElementById('panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block';">⚙️ 2.5D 特效面板</button>
+
+    <div id="panel">
+        <div style="font-weight:bold; margin-bottom:10px; color:#ffd700;">🌟 2.5D 立牌與魔法陣微調</div>
+        <div class="row"><span>立牌尺寸大小:</span><input type="range" id="cardScale" min="1.5" max="6.0" step="0.1" value="3.4"><span class="val" id="cardScaleVal">3.4</span></div>
+        <div class="row"><span>立牌離地高度:</span><input type="range" id="cardOffsetY" min="-0.5" max="1.5" step="0.02" value="0.05"><span class="val" id="cardOffsetYVal">0.05</span></div>
+        <div class="row"><span>魔法陣大小:</span><input type="range" id="ringScale" min="0.5" max="3.0" step="0.05" value="1.35"><span class="val" id="ringScaleVal">1.35</span></div>
+        <div class="row"><span>星塵飄動速度:</span><input type="range" id="particleSpeed" min="0.2" max="3.0" step="0.1" value="1.0"><span class="val" id="particleSpeedVal">1.0</span></div>
+        <div class="row"><span>移動速度:</span><input type="range" id="moveSpeed" min="1.0" max="6.0" step="0.2" value="2.8"><span class="val" id="moveSpeedVal">2.8</span></div>
+        <div class="row">
+            <span>永遠正面朝向鏡頭:</span>
+            <input type="checkbox" id="billboardLock" checked style="width:16px; height:16px; cursor:pointer;">
+        </div>
+    </div>
+
+    <script>
+        // 防黑屏檢核 1：全域錯誤攔截顯示
+        window.addEventListener('error', function(e) {
+            const box = document.getElementById('errorBox');
+            if (box) {
+                box.style.display = 'block';
+                box.innerText = '⚠️ 執行錯誤：' + e.message + ' (行號: ' + e.lineno + ')';
+            }
+        });
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        // 防黑屏檢核 2：明確設定星空深藍背景色
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0d1021);
+        scene.fog = new THREE.FogExp2(0x0d1021, 0.028);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 3.8, 8.5);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x0d1021, 1);
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.maxPolarAngle = Math.PI / 2 - 0.03;
+        controls.target.set(0, 1.6, 0);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+        controls.update();
+
+        // 燈光與地面
+        scene.add(new THREE.AmbientLight(0xdbe9ff, 0.9));
+        const pointLight = new THREE.PointLight(0xffd700, 1.5, 12);
+        pointLight.position.set(0, 2, 0);
+        scene.add(pointLight);
+
+        const floor = new THREE.Mesh(
+            new THREE.PlaneGeometry(60, 60),
+            new THREE.MeshStandardMaterial({ color: 0x15192b, roughness: 0.7, metalness: 0.2 })
+        );
+        floor.rotation.x = -Math.PI / 2;
+        scene.add(floor);
+
+        const grid = new THREE.GridHelper(60, 60, 0x3a4466, 0x222842);
+        grid.position.y = 0.005;
+        scene.add(grid);
+
+        // =========================================================================
+        // 1. 產生 3D 地面金色雙層發光魔法陣 (Magic Circle)
+        // =========================================================================
+        function createMagicCircleTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            const cx = 256, cy = 256;
+
+            // 外圍柔和金光暈
+            const radGrad = ctx.createRadialGradient(cx, cy, 40, cx, cy, 250);
+            radGrad.addColorStop(0.0, 'rgba(255, 230, 130, 0.25)');
+            radGrad.addColorStop(0.6, 'rgba(140, 220, 255, 0.18)');
+            radGrad.addColorStop(0.88, 'rgba(255, 215, 90, 0.45)');
+            radGrad.addColorStop(1.0, 'rgba(255, 215, 0, 0)');
+            ctx.fillStyle = radGrad;
+            ctx.fillRect(0, 0, 512, 512);
+
+            ctx.strokeStyle = '#ffe680';
+            ctx.shadowColor = '#ffd700';
+            ctx.shadowBlur = 12;
+
+            // 同心圓環
+            [230, 212, 165, 95].forEach((r, idx) => {
+                ctx.lineWidth = idx === 0 ? 4 : 2.5;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.stroke();
+            });
+
+            // 八芒星幾何陣列
+            for (let s = 0; s < 2; s++) {
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate((s * Math.PI) / 4);
+                ctx.lineWidth = 2.5;
+                ctx.strokeRect(-150, -150, 300, 300);
+                ctx.restore();
+            }
+
+            // 符文星點裝飾
+            ctx.fillStyle = '#ffffff';
+            for (let i = 0; i < 24; i++) {
+                const ang = (i / 24) * Math.PI * 2;
+                const rx = cx + Math.cos(ang) * 221;
+                const ry = cy + Math.sin(ang) * 221;
+                ctx.beginPath();
+                ctx.arc(rx, ry, i % 3 === 0 ? 4 : 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        // =========================================================================
+        // 2. 內建高畫質 2D 唯美極光獨角獸立繪（免外部圖檔即可直接顯示）
+        // =========================================================================
+        function createDefaultUnicorn2DTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 768;
+            canvas.height = 768;
+            const ctx = canvas.getContext('2d');
+
+            ctx.save();
+            // 發光外氣場
+            ctx.shadowColor = 'rgba(180, 225, 255, 0.85)';
+            ctx.shadowBlur = 22;
+
+            // 繪製飄逸大波浪極光尾巴 (粉紫藍漸層)
+            const tailGrad = ctx.createLinearGradient(480, 360, 720, 660);
+            tailGrad.addColorStop(0.0, '#fff5fc');
+            tailGrad.addColorStop(0.35, '#bde8ff');
+            tailGrad.addColorStop(0.7, '#e2b8ff');
+            tailGrad.addColorStop(1.0, '#ffd6ec');
+            ctx.fillStyle = tailGrad;
+            ctx.strokeStyle = '#5e4b8b';
+            ctx.lineWidth = 3.5;
+
+            ctx.beginPath();
+            ctx.moveTo(495, 410);
+            ctx.bezierCurveTo(590, 330, 700, 410, 685, 530);
+            ctx.bezierCurveTo(670, 610, 735, 650, 705, 690);
+            ctx.bezierCurveTo(640, 695, 570, 620, 560, 535);
+            ctx.bezierCurveTo(545, 470, 515, 455, 490, 445);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 後側長鬃毛底層
+            const maneGrad = ctx.createLinearGradient(220, 150, 430, 500);
+            maneGrad.addColorStop(0.0, '#fff8e7');
+            maneGrad.addColorStop(0.3, '#f7d4ff');
+            maneGrad.addColorStop(0.65, '#b8eaff');
+            maneGrad.addColorStop(1.0, '#e5c2ff');
+
+            ctx.fillStyle = maneGrad;
+            ctx.beginPath();
+            ctx.moveTo(265, 215);
+            ctx.bezierCurveTo(165, 260, 145, 380, 195, 450);
+            ctx.bezierCurveTo(225, 395, 235, 340, 275, 315);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 珍珠白修長馬身與四肢
+            const bodyGrad = ctx.createLinearGradient(240, 220, 520, 680);
+            bodyGrad.addColorStop(0.0, '#ffffff');
+            bodyGrad.addColorStop(0.55, '#f6f4ff');
+            bodyGrad.addColorStop(0.85, '#e6e4f8');
+            bodyGrad.addColorStop(1.0, '#d8d2f0');
+            ctx.fillStyle = bodyGrad;
+
+            // 遠側後腿與前腿 (帶微陰影感)
+            ctx.beginPath();
+            // 左後遠腿
+            ctx.moveTo(445, 480);
+            ctx.quadraticCurveTo(435, 575, 415, 675);
+            ctx.lineTo(440, 678);
+            ctx.quadraticCurveTo(465, 580, 480, 485);
+            // 左前遠腿
+            ctx.moveTo(315, 485);
+            ctx.quadraticCurveTo(325, 585, 330, 682);
+            ctx.lineTo(354, 682);
+            ctx.quadraticCurveTo(355, 580, 350, 480);
+            ctx.fill();
+            ctx.stroke();
+
+            // 主軀幹、優雅長頸、頭部與近側四肢
+            ctx.beginPath();
+            // 鼻吻至額頭
+            ctx.moveTo(208, 292);
+            ctx.quadraticCurveTo(192, 278, 204, 258);
+            ctx.quadraticCurveTo(232, 218, 262, 192);
+            // 耳朵
+            ctx.lineTo(268, 148);
+            ctx.lineTo(292, 182);
+            ctx.lineTo(306, 152);
+            ctx.lineTo(314, 196);
+            // 頸部後弧線至背脊、臀部
+            ctx.bezierCurveTo(345, 255, 355, 345, 385, 378);
+            ctx.bezierCurveTo(435, 382, 488, 362, 518, 412);
+            ctx.bezierCurveTo(535, 448, 520, 505, 502, 548);
+            // 右後腿
+            ctx.quadraticCurveTo(510, 618, 518, 685);
+            ctx.lineTo(490, 685);
+            ctx.quadraticCurveTo(478, 610, 462, 535);
+            // 腹部流線
+            ctx.bezierCurveTo(418, 518, 372, 515, 338, 498);
+            // 右前腿
+            ctx.quadraticCurveTo(315, 595, 302, 690);
+            ctx.lineTo(274, 690);
+            ctx.quadraticCurveTo(282, 585, 288, 482);
+            // 胸廓至下顎
+            ctx.bezierCurveTo(252, 442, 258, 362, 276, 292);
+            ctx.quadraticCurveTo(242, 310, 208, 292);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 黃金馬蹄
+            ctx.fillStyle = '#ffd766';
+            [[274, 676, 28, 16], [330, 668, 24, 15], [415, 664, 25, 15], [490, 671, 28, 15]].forEach(h => {
+                ctx.fillRect(h[0], h[1], h[2], h[3]);
+                ctx.strokeRect(h[0], h[1], h[2], h[3]);
+            });
+
+            // 溫柔眼神與睫毛
+            ctx.fillStyle = '#4a2c7a';
+            ctx.beginPath();
+            ctx.ellipse(254, 242, 7, 5, -0.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(252, 240, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 前側多層次大波浪極光長鬃毛
+            ctx.fillStyle = maneGrad;
+            ctx.beginPath();
+            ctx.moveTo(288, 178);
+            ctx.bezierCurveTo(365, 145, 435, 225, 405, 315);
+            ctx.bezierCurveTo(445, 355, 445, 435, 392, 475);
+            ctx.bezierCurveTo(375, 425, 345, 395, 325, 435);
+            ctx.bezierCurveTo(310, 365, 325, 285, 288, 178);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 額頭閃耀黃金螺旋獨角
+            const hornGrad = ctx.createLinearGradient(170, 95, 265, 205);
+            hornGrad.addColorStop(0.0, '#ffffff');
+            hornGrad.addColorStop(0.3, '#ffe666');
+            hornGrad.addColorStop(0.8, '#ffae00');
+            hornGrad.addColorStop(1.0, '#cc7a00');
+            ctx.fillStyle = hornGrad;
+            ctx.shadowColor = '#ffd700';
+            ctx.shadowBlur = 25;
+
+            ctx.beginPath();
+            ctx.moveTo(256, 206);
+            ctx.lineTo(168, 92);
+            ctx.lineTo(276, 192);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 身體與鬃毛上的細碎星芒光點
+            ctx.fillStyle = '#ffffff';
+            for (let i = 0; i < 45; i++) {
+                const sx = 220 + Math.random() * 440;
+                const sy = 160 + Math.random() * 420;
+                ctx.beginPath();
+                ctx.arc(sx, sy, Math.random() * 2.5 + 0.8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+
+            const tex = new THREE.CanvasTexture(canvas);
+            return tex;
+        }
+
+        // =========================================================================
+        // 3. 建立 2.5D 角色總群組 (結合立牌、雙層魔法陣、地面光暈)
+        // =========================================================================
+        const unicornRoot = new THREE.Group();
+        scene.add(unicornRoot);
+
+        // 腳底旋轉魔法陣
+        const magicTex = createMagicCircleTexture();
+        const magicMat = new THREE.MeshBasicMaterial({
+            map: magicTex,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            side: THREE.DoubleSide
+        });
+        const magicRingOuter = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), magicMat);
+        magicRingOuter.rotation.x = -Math.PI / 2;
+        magicRingOuter.position.y = 0.02;
+        unicornRoot.add(magicRingOuter);
+
+        const magicRingInner = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 1.7), magicMat);
+        magicRingInner.rotation.x = -Math.PI / 2;
+        magicRingInner.position.y = 0.025;
+        unicornRoot.add(magicRingInner);
+
+        // 2.5D 獨角獸立牌 (原點在底部腳掌中心，方便貼齊魔法陣)
+        const cardScaleInit = parseFloat(document.getElementById('cardScale').value);
+        const cardGeo = new THREE.PlaneGeometry(1, 1);
+        cardGeo.translate(0, 0.5, 0); // 將立牌原點設在底部邊緣
+
+        const cardMat = new THREE.MeshBasicMaterial({
+            map: createDefaultUnicorn2DTexture(),
+            transparent: true,
+            alphaTest: 0.03,
+            side: THREE.DoubleSide
+        });
+        const billboardMesh = new THREE.Mesh(cardGeo, cardMat);
+        billboardMesh.scale.set(cardScaleInit, cardScaleInit, 1);
+        billboardMesh.position.y = parseFloat(document.getElementById('cardOffsetY').value);
+        unicornRoot.add(billboardMesh);
+
+        // 點擊目標點光圈
+        const targetMarker = new THREE.Mesh(
+            new THREE.RingGeometry(0.18, 0.34, 32),
+            new THREE.MeshBasicMaterial({ color: 0xffd700, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
+        );
+        targetMarker.rotation.x = -Math.PI / 2;
+        targetMarker.position.y = 0.03;
+        targetMarker.visible = false;
+        scene.add(targetMarker);
+
+        // =========================================================================
+        // 4. 建立環繞角色的 3D 立體漂浮星塵粒子 (3D Starlight Particles)
+        // =========================================================================
+        const particleCount = 90;
+        const pGeo = new THREE.BufferGeometry();
+        const pPositions = new Float32Array(particleCount * 3);
+        const pColors = new Float32Array(particleCount * 3);
+        const pPhases = [];
+
+        const palette = [
+            new THREE.Color(0xffe680),
+            new THREE.Color(0x99e6ff),
+            new THREE.Color(0xffb8f0),
+            new THREE.Color(0xffffff)
+        ];
+
+        for (let i = 0; i < particleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 0.4 + Math.random() * 1.6;
+            pPositions[i * 3] = Math.cos(angle) * radius;
+            pPositions[i * 3 + 1] = Math.random() * 3.2;
+            pPositions[i * 3 + 2] = Math.sin(angle) * radius;
+
+            const c = palette[i % palette.length];
+            pColors[i * 3] = c.r;
+            pColors[i * 3 + 1] = c.g;
+            pColors[i * 3 + 2] = c.b;
+
+            pPhases.push({
+                angle: angle,
+                radius: radius,
+                speed: 0.4 + Math.random() * 0.8,
+                ySpeed: 0.3 + Math.random() * 0.5
+            });
+        }
+        pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+        pGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
+
+        // 圓形柔光粒子貼圖
+        const dotCanvas = document.createElement('canvas');
+        dotCanvas.width = 64; dotCanvas.height = 64;
+        const dCtx = dotCanvas.getContext('2d');
+        const dGrad = dCtx.createRadialGradient(32, 32, 2, 32, 32, 30);
+        dGrad.addColorStop(0, 'rgba(255,255,255,1)');
+        dGrad.addColorStop(0.4, 'rgba(255,240,200,0.6)');
+        dGrad.addColorStop(1, 'rgba(255,255,255,0)');
+        dCtx.fillStyle = dGrad;
+        dCtx.fillRect(0, 0, 64, 64);
+
+        const particleSystem = new THREE.Points(
+            pGeo,
+            new THREE.PointsMaterial({
+                size: 0.22,
+                map: new THREE.CanvasTexture(dotCanvas),
+                vertexColors: true,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            })
+        );
+        unicornRoot.add(particleSystem);
+
+        // =========================================================================
+        // 5. 支援上傳您剛剛那張 2D 獨角獸圖片（含自動智慧去除深色星空背景）
+        // =========================================================================
+        let currentAspect = 1.0;
+        let facingFlip = 1; // 1: 朝左, -1: 朝右 (依移動方向自動平滑翻轉立牌)
+
+        document.getElementById('imgInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    const c = document.createElement('canvas');
+                    c.width = img.width;
+                    c.height = img.height;
+                    const ctx = c.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    // 若勾選自動去背，將深色星空背景轉為透明並柔化邊緣
+                    if (document.getElementById('autoRemoveBg').checked) {
+                        const imgData = ctx.getImageData(0, 0, c.width, c.height);
+                        const d = imgData.data;
+                        for (let i = 0; i < d.length; i += 4) {
+                            const r = d[i], g = d[i + 1], b = d[i + 2];
+                            const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+                            if (brightness < 48) {
+                                d[i + 3] = 0;
+                            } else if (brightness < 85) {
+                                d[i + 3] = Math.floor(((brightness - 48) / 37) * 255);
+                            }
+                        }
+                        ctx.putImageData(imgData, 0, 0);
+                    }
+
+                    currentAspect = img.width / img.height;
+                    const newTex = new THREE.CanvasTexture(c);
+                    cardMat.map = newTex;
+                    cardMat.needsUpdate = true;
+
+                    const s = parseFloat(document.getElementById('cardScale').value);
+                    billboardMesh.scale.set(s * currentAspect * facingFlip, s, 1);
+                    document.getElementById('status').innerText = '已套用自訂 2D 獨角獸立繪！';
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // 面板滑桿綁定
+        function bindSlider(id, valId, cb) {
+            const el = document.getElementById(id);
+            const vEl = document.getElementById(valId);
+            el.addEventListener('input', (e) => {
+                const v = parseFloat(e.target.value);
+                vEl.innerText = v.toFixed(2);
+                if (cb) cb(v);
+            });
+        }
+        bindSlider('cardScale', 'cardScaleVal', v => {
+            billboardMesh.scale.set(v * currentAspect * facingFlip, v, 1);
+        });
+        bindSlider('cardOffsetY', 'cardOffsetYVal', v => {
+            billboardMesh.position.y = v;
+        });
+        bindSlider('ringScale', 'ringScaleVal', v => {
+            magicRingOuter.scale.setScalar(v);
+            magicRingInner.scale.setScalar(v);
+        });
+        bindSlider('particleSpeed', 'particleSpeedVal');
+        bindSlider('moveSpeed', 'moveSpeedVal');
+
+        // 點擊地板移動與鏡頭防誤觸
+        let pointerDownPos = new THREE.Vector2();
+        let targetPos = null;
+        let walkBounce = 0;
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        window.addEventListener('pointerdown', (e) => pointerDownPos.set(e.clientX, e.clientY));
+        window.addEventListener('pointerup', (e) => {
+            if (e.target.closest('#ui') || e.target.closest('#panel') || e.target.closest('#toggleBtn')) return;
+            if (pointerDownPos.distanceTo(new THREE.Vector2(e.clientX, e.clientY)) > 5) return;
+
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const hits = raycaster.intersectObject(floor);
+
+            if (hits.length > 0) {
+                targetPos = hits[0].point;
+                targetMarker.position.set(targetPos.x, 0.03, targetPos.z);
+                targetMarker.visible = true;
+                document.getElementById('status').innerText = '✨ 輕盈漫步移動中...';
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // =========================================================================
+        // 6. 動畫主迴圈 (處理 Billboard 面向鏡頭、左右翻轉、輕盈躍動、星塵與魔法陣)
+        // =========================================================================
+        const clock = new THREE.Clock();
+        const camRight = new THREE.Vector3();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            const elapsed = clock.getElapsedTime();
+
+            const s = parseFloat(document.getElementById('cardScale').value);
+            const baseOffsetY = parseFloat(document.getElementById('cardOffsetY').value);
+            const pSpeed = parseFloat(document.getElementById('particleSpeed').value);
+            const mSpeed = parseFloat(document.getElementById('moveSpeed').value);
+
+            // 1. 魔法陣雙向緩慢旋轉
+            magicRingOuter.rotation.z = elapsed * 0.35;
+            magicRingInner.rotation.z = -elapsed * 0.6;
+
+            // 2. 處理點擊移動與優雅輕跳步態 (2.5D 專屬神獸律動)
+            let isMoving = false;
+            if (targetPos) {
+                const cur = unicornRoot.position.clone();
+                cur.y = 0;
+                const tgt = targetPos.clone();
+                tgt.y = 0;
+                const dist = cur.distanceTo(tgt);
+
+                if (dist > 0.12) {
+                    isMoving = true;
+                    const dir = new THREE.Vector3().subVectors(tgt, cur).normalize();
+                    unicornRoot.position.addScaledVector(dir, mSpeed * delta);
+
+                    // 計算移動方向相對於當前鏡頭是「往右」還是「往左」，自動將 2D 立牌翻面
+                    camRight.setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+                    const moveDotRight = dir.dot(camRight);
+                    if (moveDotRight > 0.15) facingFlip = -1; // 往畫面右方走（翻轉面向右）
+                    else if (moveDotRight < -0.15) facingFlip = 1; // 往畫面左方走（面向左）
+                } else {
+                    targetPos = null;
+                    targetMarker.visible = false;
+                    document.getElementById('status').innerText = '✨ 到達目的地，星光待機中';
+                }
+            }
+
+            // 3. 2.5D 立牌自動正面朝向鏡頭 (Cylindrical Billboard)
+            if (document.getElementById('billboardLock').checked) {
+                const camPos = camera.position;
+                const uPos = unicornRoot.position;
+                billboardMesh.rotation.y = Math.atan2(camPos.x - uPos.x, camPos.z - uPos.z);
+            }
+
+            // 平滑翻面與移動時的輕盈起伏搖擺
+            const targetScaleX = s * currentAspect * facingFlip;
+            billboardMesh.scale.x += (targetScaleX - billboardMesh.scale.x) * Math.min(1, delta * 10);
+            billboardMesh.scale.y = s;
+
+            if (isMoving) {
+                walkBounce += delta * mSpeed * 3.8;
+                billboardMesh.position.y = baseOffsetY + Math.abs(Math.sin(walkBounce)) * 0.16;
+                billboardMesh.rotation.z = Math.cos(walkBounce) * 0.045;
+            } else {
+                // 待機時柔和呼吸懸浮
+                billboardMesh.position.y = baseOffsetY + Math.sin(elapsed * 2.2) * 0.04;
+                billboardMesh.rotation.z *= 0.9;
+            }
+
+            // 4. 更新 3D 環繞星塵粒子
+            const posAttr = pGeo.attributes.position;
+            for (let i = 0; i < particleCount; i++) {
+                const ph = pPhases[i];
+                ph.angle += delta * ph.speed * pSpeed * 0.5;
+                let y = posAttr.getY(i) + delta * ph.ySpeed * pSpeed;
+                if (y > 3.4) y = 0.05;
+
+                posAttr.setXYZ(
+                    i,
+                    Math.cos(ph.angle) * ph.radius,
+                    y,
+                    Math.sin(ph.angle) * ph.radius
+                );
+            }
+            posAttr.needsUpdate = true;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>

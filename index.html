@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>月光森林聖域 — 東方主角自由漫步 × 獨角獸心安宮</title>
+    <link rel="stylesheet" href="css/style.css?v=20261115_7">
+</head>
+<body>
+    <div id="dropOverlay">🦄 放開滑鼠以更新守護獨角獸圖片或自訂 MP3 配樂！</div>
+    <div id="toastBanner"></div>
+    <div id="errorBox"></div>
+
+    <!-- 左上角聖域與東方主角控制面板 -->
+    <div id="topBar">
+        <div class="title-glow">🌙 月光森林・獨角獸心安聖域</div>
+        <div id="status" class="sub-info">點擊森林草地或按 WASD / 方向鍵控制主角自由走動參拜</div>
+        <div class="hero-switch">
+            <span style="font-size:12px; color:#ffd700; font-weight:bold;">參拜主角：</span>
+            <button id="btnFemale" class="btn-role active" onclick="switchHeroGender('female')">👧 東方女主角</button>
+            <button id="btnMale" class="btn-role" onclick="switchHeroGender('male')">👦 東方男主角</button>
+            <label style="font-size:11.5px; color:#bce; cursor:pointer; margin-left:4px;">
+                <input type="checkbox" id="camFollowHero"> 鏡頭跟隨主角
+            </label>
+        </div>
+        <div class="hero-switch" style="margin-top:6px;">
+            <span style="font-size:12px; color:#88eeff; font-weight:bold;">主角面向：</span>
+            <button id="btnViewAuto" class="btn-role active" style="padding:3px 9px; font-size:11.5px;" onclick="switchHeroViewMode('auto')">🔄 自動隨移動切換</button>
+            <button id="btnViewFront" class="btn-role" style="padding:3px 9px; font-size:11.5px;" onclick="switchHeroViewMode('front')">😊 正面</button>
+            <button id="btnViewSide" class="btn-role" style="padding:3px 9px; font-size:11.5px;" onclick="switchHeroViewMode('side')">🚶 側面</button>
+            <button id="btnViewBack" class="btn-role" style="padding:3px 9px; font-size:11.5px;" onclick="switchHeroViewMode('back')">🙇 背面</button>
+        </div>
+        <div class="hero-switch" style="margin-top:6px;">
+            <span style="font-size:12px; color:#ffb3e6; font-weight:bold;">古風漢服：</span>
+            <button id="btnOutfitSakura" class="btn-role active" style="padding:3px 9px; font-size:11.5px;" onclick="switchHeroOutfit('sakura')">🌸 櫻粉流仙</button>
+            <button id="btnOutfitMoonwhite" class="btn-role" style="padding:3px 9px; font-size:11.5px;" onclick="switchHeroOutfit('moonwhite')">🌙 月白仙衣</button>
+            <button id="btnOutfitXuanjin" class="btn-role" style="padding:3px 9px; font-size:11.5px;" onclick="switchHeroOutfit('xuanjin')">🌌 玄金星袍</button>
+            <button id="btnOutfitCrimson" class="btn-role" style="padding:3px 9px; font-size:11.5px;" onclick="switchHeroOutfit('crimson')">🔥 赤焰戰袍</button>
+        </div>
+        <!-- 左上角聖域音樂控制區塊 (.audio-box) -->
+        <div class="audio-box">
+            <div class="audio-row">
+                <button id="bgmToggleBtn" class="btn-mini btn-audio" onclick="toggleSanctuaryMusic()">🔇 聖域療癒音樂：已暫停</button>
+                <div class="top-vol-wrap">
+                    <span>🔊 音量:</span>
+                    <input type="range" id="bgmVolume" min="0" max="1" step="0.02" value="0.65">
+                </div>
+            </div>
+            <div class="audio-row" style="margin-top:5px;">
+                <label class="btn-mini" style="display:inline-flex; align-items:center; gap:4px;">
+                    🎧 換自己的 MP3 (自動記憶)
+                    <input type="file" id="bgmFileInput" accept="audio/*" style="display:none;">
+                </label>
+            </div>
+        </div>
+        <div class="mini-btns">
+            <label class="btn-mini">
+                📂 換獨角獸圖
+                <input type="file" id="imgInput" accept="image/*" style="display:none;">
+            </label>
+            <button id="bakeBtn" class="btn-mini btn-bake">💾 下載永久固定版 HTML</button>
+            <span id="perfStats" style="font-size:11px; color:#66ffcc; background:rgba(0,40,35,0.65); border:1px solid rgba(102,255,204,0.35); padding:3px 8px; border-radius:6px; font-family:monospace;">⚡ 60 FPS ｜ Draw Calls: 優化中...</span>
+        </div>
+    </div>
+
+    <button id="toggleBtn" onclick="const p = document.getElementById('panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block';">⚙️ 聖域與主角微調</button>
+
+    <div id="panel">
+        <div style="font-weight:bold; margin-bottom:10px; color:#88eeff;">🌲 獨角獸與主角微調</div>
+        <div class="row"><span>獨角獸大小:</span><input type="range" id="cardScale" min="1.5" max="6.0" step="0.1" value="3.6"><span class="val" id="cardScaleVal">3.60</span></div>
+        <div class="row"><span>祭壇站立高度:</span><input type="range" id="cardOffsetY" min="-0.5" max="1.5" step="0.02" value="0.00"><span class="val" id="cardOffsetYVal">0.00</span></div>
+        <div class="row"><span>外圍黑底消除:</span><input type="range" id="bgThreshold" min="0" max="75" step="1" value="28"><span class="val" id="bgThreshVal">28</span></div>
+        <hr style="border-color:rgba(255,255,255,0.12);">
+        <div class="row"><span>主角身高大小:</span><input type="range" id="heroScale" min="1.0" max="3.5" step="0.05" value="1.85"><span class="val" id="heroScaleVal">1.85</span></div>
+        <div class="row"><span>主角移動速度:</span><input type="range" id="heroSpeed" min="1.5" max="7.0" step="0.2" value="3.6"><span class="val" id="heroSpeedVal">3.60</span></div>
+        <div class="row"><span>森林迷霧濃度:</span><input type="range" id="fogDensity" min="0.005" max="0.05" step="0.002" value="0.020"><span class="val" id="fogDensityVal">0.020</span></div>
+    </div>
+
+    <!-- 底部：心安宮 5 大療癒問事導覽列 + 火元素獨角獸領域 -->
+    <div id="navDock">
+        <button class="nav-btn active" onclick="commandHeroToStation('sanctuary')">🏛️ 聖域全景</button>
+        <button class="nav-btn" onclick="commandHeroToStation('pool')">💧 許願星泉 (稟報)</button>
+        <button class="nav-btn" onclick="commandHeroToStation('altar')">🦄 聖壇共鳴 (請示)</button>
+        <button class="nav-btn" onclick="commandHeroToStation('oracle')">🃏 靈籤神諭 (抽牌)</button>
+        <button class="nav-btn" onclick="commandHeroToStation('tree')">🌳 祈願靈樹 (留存)</button>
+        <button class="nav-btn" style="border-color:rgba(255,95,30,0.75); color:#ffb380; background:linear-gradient(135deg,rgba(180,35,0,0.45),rgba(60,10,5,0.65));" onclick="commandHeroToStation('fire_domain')">🔥 赤焰獨角獸領域</button>
+        <button class="nav-btn" onclick="triggerDewOffering()">✨ 獻上晨露</button>
+    </div>
+
+    <!-- 彈窗 1：許願星泉 -->
+    <div id="modalPool" class="modal-card">
+        <span class="close-x" onclick="closeAllModals()">✕</span>
+        <div class="modal-title">💧 許願星泉・傾訴心事</div>
+        <div class="modal-desc">主角已來到許願星泉旁。請深呼吸，將心中的迷惘或祈求化為星光種子投入泉中：</div>
+        <div class="category-group">
+            <span class="cat-pill selected" onclick="selectCategory(this, '心靈療癒與陪伴')">💖 心靈療癒與陪伴</span>
+            <span class="cat-pill" onclick="selectCategory(this, '事業與方向迷惘')">🌟 事業與方向迷惘</span>
+            <span class="cat-pill" onclick="selectCategory(this, '感情與人際緣分')">🌸 感情與人際緣分</span>
+            <span class="cat-pill" onclick="selectCategory(this, '平安順遂祈福')">🍀 平安順遂祈福</span>
+        </div>
+        <textarea id="wishText" class="wish-input" placeholder="請寫下您的姓名、今日心事或祈求指引的問題..."></textarea>
+        <div>
+            <button class="action-btn" onclick="submitWishToPool()">✨ 化為星光稟報獨角獸</button>
+            <button class="action-btn secondary" onclick="closeAllModals()">繼續漫步</button>
+        </div>
+    </div>
+
+    <!-- 彈窗 2：聖壇光之共鳴 -->
+    <div id="modalAltar" class="modal-card">
+        <span class="close-x" onclick="closeAllModals()">✕</span>
+        <div class="modal-title">🦄 主祭壇・光之共鳴（請示聖意）</div>
+        <div id="currentWishDisplay" class="modal-desc">主角正佇立於聖壇前仰望獨角獸。請點擊下方按鈕，透過黃金獨角的星光共鳴確認指引是否已準備就緒：</div>
+        <div id="divinationResult" style="margin: 14px 0; font-size: 15px; font-weight: bold; color: #ffd700; min-height: 24px;"></div>
+        <div>
+            <button class="action-btn" onclick="castLightResonance()">🌟 祈請獨角獸光之共鳴</button>
+            <button id="goOracleBtn" class="action-btn" style="display:none; background:linear-gradient(135deg,#00e676,#00b0ff);" onclick="commandHeroToStation('oracle')">🃏 走向神諭陣抽籤</button>
+        </div>
+    </div>
+
+    <!-- 彈窗 3：神諭靈籤解讀 -->
+    <div id="modalOracle" class="modal-card">
+        <span class="close-x" onclick="closeAllModals()">✕</span>
+        <div class="oracle-badge" id="oracleTag">獨角獸星光神諭</div>
+        <div class="modal-title" id="oracleTitle">【第一籤・月光淨化之泉】</div>
+        <div class="oracle-quote" id="oraclePoem"></div>
+        <div class="modal-desc" id="oracleAdvice" style="text-align:left; font-size:13.5px; color:#dceeff;"></div>
+        <div id="oracleLuckyBox" class="oracle-lucky-box">✨ 開運星語：月光銀白・正北方・保持平靜微笑</div>
+        <div style="margin-top: 14px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
+            <button class="action-btn btn-download-card" onclick="downloadOracleGuardianCard()">📸 下載專屬神諭守護卡 (PNG)</button>
+            <button class="action-btn" onclick="hangWishOnTree()">🌳 收下祝福並掛上祈願靈樹</button>
+            <button class="action-btn secondary" onclick="closeAllModals()">繼續漫步</button>
+        </div>
+    </div>
+
+    <!-- 彈窗 4：祈願靈樹心願牆 -->
+    <div id="modalTree" class="modal-card">
+        <span class="close-x" onclick="closeAllModals()">✕</span>
+        <div class="modal-title">🌳 千年祈願靈樹・心願星果</div>
+        <div class="modal-desc">每一顆在靈樹上閃耀的光球，都是被獨角獸溫柔守護的心願與祝福：</div>
+        <div id="treeWishList" style="max-height: 180px; overflow-y: auto; text-align: left; background: rgba(0,0,0,0.35); padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; font-size: 13px; line-height: 1.7; color: #e2f2ff;"></div>
+        <div>
+            <button class="action-btn" onclick="commandHeroToStation('pool')">💧 前往許願星泉稟報</button>
+            <button class="action-btn secondary" onclick="closeAllModals()">關閉</button>
+        </div>
+    </div>
+
+    <!-- 彈窗 5：火元素獨角獸領域（赤焰聖殿・破局與行動賜福） -->
+    <div id="modalFireDomain" class="modal-card" style="border-color: rgba(255, 110, 30, 0.75); box-shadow: 0 18px 50px rgba(255, 60, 0, 0.45);">
+        <span class="close-x" onclick="closeAllModals()">✕</span>
+        <div class="oracle-badge" style="background: linear-gradient(90deg, #ff3300, #ffaa00); color:#1a0500;">🔥 火元素聖域・赤焰獨角獸</div>
+        <div class="modal-title" style="color: #ffaa44;">🌋 赤焰聖壇・太陽聖火共鳴</div>
+        <div class="modal-desc" id="fireDomainDesc">
+            主角已踏入以火元素構築的「赤焰獨角獸領域」。此處由黑曜熔岩、八座聖火石柱與赤焰餘燼古木環繞，掌管**「破除猶豫、果斷行動、熱情覺醒與逆境破局」**。<br><br>
+            請點擊下方按鈕，祈請赤焰獨角獸降下**「太陽聖火覺醒儀式」**：
+        </div>
+        <div id="fireBlessingQuote" class="oracle-quote" style="display:none; border-left-color:#ff5500; background:rgba(255, 68, 0, 0.14); color:#ffe0b3;"></div>
+        <div style="margin-top: 14px;">
+            <button class="action-btn" style="background: linear-gradient(135deg, #ff3300, #ffaa00); color:#1a0500; box-shadow: 0 4px 18px rgba(255, 80, 0, 0.5);" onclick="triggerFireUnicornAwakening()">🔥 點燃太陽聖火・祈請破局賜福</button>
+            <button class="action-btn secondary" onclick="commandHeroToStation('sanctuary')">🌙 返回月光主聖域</button>
+            <button class="action-btn secondary" onclick="closeAllModals()">在火之領域漫步</button>
+        </div>
+    </div>
+
+    <!-- 防黑屏檢核 1：全域錯誤攔截器 -->
+    <script>
+        window.addEventListener('error', function(e) {
+            const box = document.getElementById('errorBox');
+            if (box) {
+                box.style.display = 'block';
+                box.innerText = '⚠️ 執行錯誤：' + e.message + ' (行號: ' + e.lineno + ')';
+            }
+        });
+    </script>
+
+    <!-- Three.js 核心與控制器 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- 原生 ES Modules 主程式入口 -->
+    <script type="module" src="js/main.js?v=20261115_7"></script>
+</body>
+</html>
