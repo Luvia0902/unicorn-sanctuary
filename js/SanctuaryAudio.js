@@ -17,17 +17,31 @@ export class SanctuaryAudio {
         this.isPlaying = false;
         this.usingCustomMp3 = false;
 
-        // 1. 主配樂 (bgmAudio)
-        this.bgmAudio = new Audio();
+        // 1. 主配樂 (bgmAudio) — 預設先指向無版權真實鋼琴曲，避免無 bgm.mp3 時因 404 非同步錯誤而喪失瀏覽器點擊播放權限
+        this.bgmAudio = new Audio(FALLBACK_PIANO_URL);
         this.bgmAudio.loop = true;
+        this.bgmAudio.preload = 'auto';
         this.bgmAudio.volume = 0.65;
 
-        // 若本地 bgm.mp3 不存在或載入失敗，自動 fallback 到 Wikimedia 無版權真實鋼琴曲
+        // 監聽真實播放與暫停事件，確保按鈕狀態 100% 同步
+        this.bgmAudio.addEventListener('playing', () => {
+            this.isPlaying = true;
+            this._updateButtonUI();
+        });
+        this.bgmAudio.addEventListener('pause', () => {
+            this._updateButtonUI();
+        });
+
+        // 若本地 bgm.mp3 載入失敗，自動 fallback 到 Wikimedia 無版權真實鋼琴曲
         this.bgmAudio.addEventListener('error', () => {
             if (!this.usingCustomMp3 && this.bgmAudio.src && !this.bgmAudio.src.includes('wikimedia.org')) {
                 this.bgmAudio.src = FALLBACK_PIANO_URL;
+                this.bgmAudio.load();
                 if (this.isPlaying) {
-                    this.bgmAudio.play().catch(() => {});
+                    this.bgmAudio.play().catch(() => {
+                        this.isPlaying = false;
+                        this._updateButtonUI();
+                    });
                 }
             }
         });
@@ -35,11 +49,16 @@ export class SanctuaryAudio {
         // 2. 森林環境音 (forestNatureAudio)
         this.forestNatureAudio = new Audio(FOREST_STREAM_URL);
         this.forestNatureAudio.loop = true;
+        this.forestNatureAudio.preload = 'auto';
         this.forestNatureAudio.volume = 0.22;
     }
 
     async init() {
-        // 優先檢查 Unicorn25D_DB 的 store 是否有 'custom_bgm_mp3'
+        this._bindUIEvents();
+        this._bindAutoPlayUnlock();
+        this._updateButtonUI();
+
+        // 1. 優先檢查 Unicorn25D_DB 的 store 是否有 'custom_bgm_mp3'
         let customDataUrl = null;
         if (this.unicorn && typeof this.unicorn.loadAudioFromIndexedDB === 'function') {
             customDataUrl = await this.unicorn.loadAudioFromIndexedDB();
@@ -48,14 +67,26 @@ export class SanctuaryAudio {
         if (customDataUrl) {
             this.usingCustomMp3 = true;
             this.bgmAudio.src = customDataUrl;
-        } else {
-            this.usingCustomMp3 = false;
-            this.bgmAudio.src = 'bgm.mp3';
+            if (this.isPlaying) {
+                this.bgmAudio.play().catch(() => {});
+            }
+            return;
         }
 
-        this._bindUIEvents();
-        this._bindAutoPlayUnlock();
-        this._updateButtonUI();
+        // 2. 檢查同資料夾是否存在真實的 bgm.mp3（避免 404 導致瀏覽器阻擋自動播放）
+        try {
+            const res = await fetch('bgm.mp3', { method: 'HEAD' });
+            const contentType = (res.headers.get('content-type') || '').toLowerCase();
+            if (res.ok && !contentType.includes('text/html')) {
+                this.usingCustomMp3 = false;
+                this.bgmAudio.src = 'bgm.mp3';
+                if (this.isPlaying) {
+                    this.bgmAudio.play().catch(() => {});
+                }
+            }
+        } catch (e) {
+            // 無本地 bgm.mp3 時維持使用 FALLBACK_PIANO_URL
+        }
     }
 
     toggleSanctuaryMusic() {
@@ -68,7 +99,16 @@ export class SanctuaryAudio {
 
     playAll() {
         this.isPlaying = true;
-        this.bgmAudio.play().catch(() => {});
+        const p1 = this.bgmAudio.play();
+        if (p1 && typeof p1.then === 'function') {
+            p1.then(() => {
+                this.isPlaying = true;
+                this._updateButtonUI();
+            }).catch(() => {
+                this.isPlaying = false;
+                this._updateButtonUI();
+            });
+        }
         this.forestNatureAudio.play().catch(() => {});
         this._updateButtonUI();
     }
@@ -158,19 +198,43 @@ export class SanctuaryAudio {
     }
 
     _bindAutoPlayUnlock() {
+        const removeUnlockListeners = () => {
+            window.removeEventListener('click', unlock);
+            window.removeEventListener('touchend', unlock);
+            window.removeEventListener('keydown', unlock);
+        };
+
         const unlock = (e) => {
+            // 若直接點擊音樂開關按鈕，交給按鈕自身的 onclick 處理並解除自動解鎖監聽
             if (e.target && e.target.closest && e.target.closest('#bgmToggleBtn')) {
-                window.removeEventListener('pointerdown', unlock);
-                window.removeEventListener('keydown', unlock);
+                removeUnlockListeners();
                 return;
             }
             if (this.bgmAudio.paused && !this.isPlaying) {
-                this.playAll();
+                this.isPlaying = true;
+                this.forestNatureAudio.play().catch(() => {});
+                const playPromise = this.bgmAudio.play();
+                if (playPromise && typeof playPromise.then === 'function') {
+                    playPromise
+                        .then(() => {
+                            this.isPlaying = true;
+                            this._updateButtonUI();
+                            removeUnlockListeners();
+                        })
+                        .catch(() => {
+                            this.isPlaying = false;
+                            this._updateButtonUI();
+                        });
+                } else {
+                    removeUnlockListeners();
+                }
+            } else {
+                removeUnlockListeners();
             }
-            window.removeEventListener('pointerdown', unlock);
-            window.removeEventListener('keydown', unlock);
         };
-        window.addEventListener('pointerdown', unlock, { passive: true });
+
+        window.addEventListener('click', unlock, { passive: true });
+        window.addEventListener('touchend', unlock, { passive: true });
         window.addEventListener('keydown', unlock, { passive: true });
     }
 }

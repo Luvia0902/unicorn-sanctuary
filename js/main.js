@@ -2,10 +2,10 @@
 // main.js：Three.js 場景初始化、燈光、森林樹木/螢火蟲生成、Raycaster 點擊事件與主動畫迴圈
 // =========================================================================
 
-import { SanctuaryUnicorn25D } from './Unicorn25D.js?v=20261115_8';
-import { EasternHeroController } from './EasternHero.js?v=20261115_8';
-import { OracleSystem, showToast, closeAllModals } from './OracleSystem.js?v=20261115_8';
-import { SanctuaryAudio } from './SanctuaryAudio.js?v=20261115_8';
+import { SanctuaryUnicorn25D } from './Unicorn25D.js?v=20261115_10';
+import { EasternHeroController } from './EasternHero.js?v=20261115_10';
+import { OracleSystem, showToast, closeAllModals } from './OracleSystem.js?v=20261115_10';
+import { SanctuaryAudio } from './SanctuaryAudio.js?v=20261115_10';
 
 // =========================================================================
 // 1. 場景、相機與渲染器（防黑屏檢核：明確深藍夜空背景與 ClearColor）
