@@ -959,6 +959,15 @@ export class EasternHeroController {
             flat.copy(fireCenter).add(toFire);
         }
 
+        // 避開水元素獨角獸主祭壇中央臺座 (-22.0, -7.2)
+        const waterCenter = new THREE.Vector2(-22.0, -7.2);
+        const toWater = new THREE.Vector2().subVectors(flat, waterCenter);
+        if (toWater.length() < 2.25) {
+            if (toWater.length() < 0.01) toWater.set(0, 1);
+            toWater.normalize().multiplyScalar(2.25);
+            flat.copy(waterCenter).add(toWater);
+        }
+
         this.targetPos = new THREE.Vector3(flat.x, 0, flat.y);
         this.lookAtAfterArrive = lookAtPoint ? lookAtPoint.clone() : null;
         this.onArriveCallback = onArrive || null;
@@ -994,7 +1003,8 @@ export class EasternHeroController {
                 const flat = new THREE.Vector2(nextPos.x, nextPos.z);
                 const distToMain = flat.distanceTo(new THREE.Vector2(0, -1.8));
                 const distToFire = flat.distanceTo(new THREE.Vector2(22.0, -7.2));
-                if (flat.length() <= 32.0 && distToMain >= 2.4 && distToFire >= 2.2) {
+                const distToWater = flat.distanceTo(new THREE.Vector2(-22.0, -7.2));
+                if (flat.length() <= 32.0 && distToMain >= 2.4 && distToFire >= 2.2 && distToWater >= 2.2) {
                     this.root.position.copy(nextPos);
                 }
             }

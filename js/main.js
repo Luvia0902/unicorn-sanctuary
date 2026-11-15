@@ -2,10 +2,10 @@
 // main.js：Three.js 場景初始化、燈光、森林樹木/螢火蟲生成、Raycaster 點擊事件與主動畫迴圈
 // =========================================================================
 
-import { SanctuaryUnicorn25D } from './Unicorn25D.js?v=20261115_7';
-import { EasternHeroController } from './EasternHero.js?v=20261115_7';
-import { OracleSystem, showToast, closeAllModals } from './OracleSystem.js?v=20261115_7';
-import { SanctuaryAudio } from './SanctuaryAudio.js?v=20261115_7';
+import { SanctuaryUnicorn25D } from './Unicorn25D.js?v=20261115_8';
+import { EasternHeroController } from './EasternHero.js?v=20261115_8';
+import { OracleSystem, showToast, closeAllModals } from './OracleSystem.js?v=20261115_8';
+import { SanctuaryAudio } from './SanctuaryAudio.js?v=20261115_8';
 
 // =========================================================================
 // 1. 場景、相機與渲染器（防黑屏檢核：明確深藍夜空背景與 ClearColor）
@@ -728,12 +728,14 @@ for (let i = 0; i < 96; i++) {
     const angle = (i / 96) * Math.PI * 2 + (Math.random() - 0.5) * 0.11;
     const dist = 13.0 + (i % 4) * 3.0 + Math.random() * 2.4;
 
-    // 保留正南方參道入口拱門視線走廊 (X: -3.0 ~ +3.0, Z: 7.5 ~ 20.5) 與東方赤焰獨角獸領域及赤焰石橋通道
+    // 保留正南方參道入口拱門視線走廊、東方赤焰獨角獸領域及石橋、西方琉璃水元素獨角獸領域及星橋通道
     const wx = Math.cos(angle) * dist;
     const wz = Math.sin(angle) * dist;
     if (Math.abs(wx) < 3.0 && wz > 7.5 && wz < 20.5) continue;
     if (Math.hypot(wx - 22.0, wz - (-7.2)) < 10.8) continue;
     if (wx > 7.5 && wx < 20.5 && Math.abs(wz - (-0.33 * wx)) < 3.2) continue;
+    if (Math.hypot(wx - (-22.0), wz - (-7.2)) < 10.8) continue;
+    if (wx < -7.5 && wx > -20.5 && Math.abs(wz - (0.33 * wx)) < 3.2) continue;
 
     // 讓照片原款蒼翠大橡樹 (0)、雙幹古楓香 (1)、寬冠古榕 (2) 佔主體，並穿插高聳白楊 (3)、黃金銀杏 (4)、垂柳 (5) 與靈櫻 (6)
     const pattern = [0, 1, 0, 2, 3, 0, 4, 1, 5, 2, 6];
@@ -764,6 +766,8 @@ for (let i = 0; i < 130; i++) {
     const wz = Math.sin(angle) * dist;
     if (Math.hypot(wx - 22.0, wz - (-7.2)) < 10.8) continue;
     if (wx > 7.5 && wx < 20.5 && Math.abs(wz - (-0.33 * wx)) < 3.2) continue;
+    if (Math.hypot(wx - (-22.0), wz - (-7.2)) < 10.8) continue;
+    if (wx < -7.5 && wx > -20.5 && Math.abs(wz - (0.33 * wx)) < 3.2) continue;
 
     const outerTypes = [0, 2, 1, 3, 0, 4, 2, 5];
     const tree = buildDiverseTree(outerTypes[i % outerTypes.length], i + 7);
@@ -824,9 +828,10 @@ const glowingMushrooms = mushroomCapMats.map((mat, idx) => ({
 
 for (let i = 0; i < 26; i++) {
     const ang = (i / 26) * Math.PI * 2 + (Math.random() - 0.5) * 0.15;
-    // 避開正南參道中央與東方赤焰石橋通道
+    // 避開正南參道中央、東方赤焰石橋通道與西方琉璃星橋通道
     if (Math.abs(Math.cos(ang)) < 0.25 && Math.sin(ang) > 0) continue;
     if (Math.cos(ang) > 0.7 && Math.abs(Math.sin(ang) - (-0.31)) < 0.28) continue;
+    if (Math.cos(ang) < -0.7 && Math.abs(Math.sin(ang) - (-0.31)) < 0.28) continue;
 
     const r = 10.8 + Math.random() * 4.4;
     const cluster = new THREE.Group();
@@ -2352,6 +2357,810 @@ const fireDomainFX = {
 };
 let heroInFireDomain = false;
 
+// =========================================================================
+// 2.95 💧 琉璃星海・水元素領域 (Water-Element Unicorn Domain, 座標 (-22.0, 0, -7.2))
+//      以水元素與深海星潮構建的西側秘境：琉璃水月星橋、水月鳥居、深海潮汐魔法陣大地、
+//      8 座白玉琉璃水靈柱、月光垂絲琉璃古樹、海藍寶晶簇與 2.5D 滄溟獨角獸祭壇
+// =========================================================================
+const waterDomainCenter = new THREE.Vector3(-22.0, 0, -7.2);
+const waterDomainGroup = new THREE.Group();
+waterDomainGroup.position.copy(waterDomainCenter);
+scene.add(waterDomainGroup);
+
+// (A) 繪製琉璃星海波光大地貼圖 (512x512 Canvas)
+function createWaterDomainGroundTexture() {
+    const c = document.createElement('canvas');
+    c.width = 512;
+    c.height = 512;
+    const ctx = c.getContext('2d');
+    const cx = 256;
+    const cy = 256;
+
+    // 1. 深海琉璃藍與月光冰青漸層基底
+    const bgGrad = ctx.createRadialGradient(cx, cy, 18, cx, cy, 250);
+    bgGrad.addColorStop(0.0, 'rgba(80, 235, 255, 0.95)');
+    bgGrad.addColorStop(0.24, 'rgba(12, 105, 168, 0.92)');
+    bgGrad.addColorStop(0.58, 'rgba(8, 34, 72, 0.90)');
+    bgGrad.addColorStop(0.88, 'rgba(5, 16, 36, 0.72)');
+    bgGrad.addColorStop(1.0, 'rgba(4, 10, 22, 0.0)');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 512, 512);
+
+    // 2. 水波漣漪與流光水脈曲線
+    for (let i = 0; i < 16; i++) {
+        const baseA = (i / 16) * Math.PI * 2;
+        ctx.strokeStyle = i % 2 === 0 ? 'rgba(120, 245, 255, 0.72)' : 'rgba(64, 175, 255, 0.52)';
+        ctx.lineWidth = i % 2 === 0 ? 2.8 : 1.8;
+        ctx.beginPath();
+        let r = 34;
+        let a = baseA;
+        ctx.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+        while (r < 228) {
+            r += 20;
+            a += Math.sin(i * 2.3 + r * 0.06) * 0.12;
+            ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+        }
+        ctx.stroke();
+    }
+
+    // 3. 三層潮汐星海波紋法陣環
+    [108, 152, 190].forEach((rad, idx) => {
+        ctx.strokeStyle = idx === 0 ? 'rgba(170, 250, 255, 0.85)' : 'rgba(70, 205, 255, 0.65)';
+        ctx.lineWidth = idx === 0 ? 3.0 : 2.0;
+        ctx.beginPath();
+        ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+        ctx.stroke();
+    });
+
+    // 八芒冰晶星盤
+    ctx.strokeStyle = 'rgba(155, 240, 255, 0.68)';
+    ctx.lineWidth = 2.0;
+    for (let k = 0; k < 8; k++) {
+        const a1 = (k / 8) * Math.PI * 2;
+        const a2 = ((k + 3) / 8) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a1) * 108, cy + Math.sin(a1) * 108);
+        ctx.lineTo(cx + Math.cos(a2) * 108, cy + Math.sin(a2) * 108);
+        ctx.stroke();
+    }
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.encoding = THREE.sRGBEncoding;
+    return tex;
+}
+
+const waterGroundMat = new THREE.MeshStandardMaterial({
+    map: createWaterDomainGroundTexture(),
+    transparent: true,
+    roughness: 0.25,
+    metalness: 0.35,
+    emissive: new THREE.Color(0x0088cc),
+    emissiveIntensity: 0.42,
+    depthWrite: false
+});
+const waterGround = new THREE.Mesh(new THREE.PlaneGeometry(19.5, 19.5), waterGroundMat);
+waterGround.rotation.x = -Math.PI / 2;
+waterGround.position.set(0, 0.025, 0);
+waterDomainGroup.add(waterGround);
+
+// (B) 繪製 2.5D 潮汐水蓮靈珠 Sprite 貼圖 (供水蓮燈座與 8 座水靈柱頂端使用)
+function createWaterLotusOrbTexture() {
+    const c = document.createElement('canvas');
+    c.width = 128;
+    c.height = 192;
+    const ctx = c.getContext('2d');
+
+    const outerG = ctx.createRadialGradient(64, 118, 8, 64, 108, 58);
+    outerG.addColorStop(0.0, 'rgba(235, 255, 255, 1.0)');
+    outerG.addColorStop(0.32, 'rgba(80, 235, 255, 0.92)');
+    outerG.addColorStop(0.68, 'rgba(0, 140, 255, 0.68)');
+    outerG.addColorStop(1.0, 'rgba(0, 50, 130, 0.0)');
+    ctx.fillStyle = outerG;
+    ctx.beginPath();
+    ctx.moveTo(64, 18);
+    ctx.quadraticCurveTo(116, 88, 96, 150);
+    ctx.quadraticCurveTo(64, 180, 32, 150);
+    ctx.quadraticCurveTo(12, 88, 64, 18);
+    ctx.fill();
+
+    const innerG = ctx.createRadialGradient(64, 128, 4, 64, 120, 32);
+    innerG.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+    innerG.addColorStop(0.55, 'rgba(165, 250, 255, 0.9)');
+    innerG.addColorStop(1.0, 'rgba(0, 180, 255, 0.0)');
+    ctx.fillStyle = innerG;
+    ctx.beginPath();
+    ctx.arc(64, 122, 28, 0, Math.PI * 2);
+    ctx.fill();
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.encoding = THREE.sRGBEncoding;
+    return tex;
+}
+const waterLotusOrbTex = createWaterLotusOrbTexture();
+const animatedWaterSprites = [];
+
+// (C) 連接主聖域與水元素領域的「琉璃水月星橋」與「水月結界鳥居」
+const deepSapphireMat = new THREE.MeshStandardMaterial({
+    color: 0x0e2844,
+    roughness: 0.35,
+    metalness: 0.45
+});
+const aquaSilverMat = new THREE.MeshStandardMaterial({
+    color: 0x80f5ff,
+    emissive: 0x0099dd,
+    emissiveIntensity: 0.85,
+    roughness: 0.2,
+    metalness: 0.65
+});
+const pearlJadeMat = new THREE.MeshStandardMaterial({
+    color: 0x226688,
+    emissive: 0x082b44,
+    emissiveIntensity: 0.45,
+    roughness: 0.3,
+    metalness: 0.3
+});
+
+// 7 階琉璃鑲銀星橋，從 (-10.5, 0, -3.5) 延伸至 (-17.5, 0, -5.8)
+const waterBridgeAngle = Math.atan2(-7.2, -22.0);
+for (let s = 0; s < 7; s++) {
+    const t = s / 6;
+    const bx = -10.5 + t * -7.0;
+    const bz = -3.5 + t * -2.3;
+    const stepGroup = new THREE.Group();
+    stepGroup.position.set(bx, 0.03, bz);
+    stepGroup.rotation.y = -waterBridgeAngle;
+
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.08, 2.2), deepSapphireMat);
+    stepGroup.add(slab);
+
+    const trimL = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.09, 0.12), aquaSilverMat);
+    trimL.position.z = 1.02;
+    const trimR = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.09, 0.12), aquaSilverMat);
+    trimR.position.z = -1.02;
+    stepGroup.add(trimL, trimR);
+
+    forestGroup.add(stepGroup);
+}
+
+// 領域入口「水月琉璃鳥居」位於 (-14.2, 0, -4.7)
+const waterGateGroup = new THREE.Group();
+waterGateGroup.position.set(-14.2, 0, -4.7);
+waterGateGroup.rotation.y = -waterBridgeAngle + Math.PI / 2;
+
+const wGatePostL = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 3.6, 12), pearlJadeMat);
+wGatePostL.position.set(-1.35, 1.8, 0);
+const wGatePostR = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 3.6, 12), pearlJadeMat);
+wGatePostR.position.set(1.35, 1.8, 0);
+const wGateTopBeam = new THREE.Mesh(new THREE.BoxGeometry(3.7, 0.24, 0.32), deepSapphireMat);
+wGateTopBeam.position.set(0, 3.55, 0);
+const wGateAquaBeam = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.14, 0.24), aquaSilverMat);
+wGateAquaBeam.position.set(0, 3.05, 0);
+waterGateGroup.add(wGatePostL, wGatePostR, wGateTopBeam, wGateAquaBeam);
+
+// 鳥居兩側潮汐水蓮燈座
+[-1.65, 1.65].forEach((xp, idx) => {
+    const lotusPed = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.32, 0.95, 8), deepSapphireMat);
+    lotusPed.position.set(xp, 0.48, -0.42);
+    const lotusBowl = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.18, 0.28, 10), aquaSilverMat);
+    lotusBowl.position.set(xp, 1.05, -0.42);
+    waterGateGroup.add(lotusPed, lotusBowl);
+
+    const waterSp = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+            map: waterLotusOrbTex,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        })
+    );
+    waterSp.position.set(xp, 1.55, -0.42);
+    waterSp.scale.set(0.85, 1.25, 1);
+    waterGateGroup.add(waterSp);
+    animatedWaterSprites.push({
+        sprite: waterSp,
+        baseY: 1.55,
+        baseW: 0.85,
+        baseH: 1.25,
+        phase: idx * 2.1
+    });
+});
+scene.add(waterGateGroup);
+
+// (D) 滄溟獨角獸中央三層琉璃水月祭壇與雙層旋轉潮汐星環
+const waterAltarGroup = new THREE.Group();
+waterDomainGroup.add(waterAltarGroup);
+
+const waterAltarHit = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.4, 1.8, 3.4, 12),
+    new THREE.MeshBasicMaterial({ visible: false })
+);
+waterAltarHit.position.y = 1.7;
+waterAltarHit.userData = { station: 'water_domain' };
+waterAltarGroup.add(waterAltarHit);
+interactables.push(waterAltarHit);
+
+const wTier1 = new THREE.Mesh(new THREE.CylinderGeometry(2.35, 2.65, 0.36, 12), deepSapphireMat);
+wTier1.position.y = 0.18;
+const wTier2 = new THREE.Mesh(new THREE.CylinderGeometry(1.78, 2.05, 0.34, 12), pearlJadeMat);
+wTier2.position.y = 0.52;
+const wTier3 = new THREE.Mesh(new THREE.CylinderGeometry(1.28, 1.48, 0.32, 20), aquaSilverMat);
+wTier3.position.y = 0.84;
+waterAltarGroup.add(wTier1, wTier2, wTier3);
+
+const waterTidalRing1 = new THREE.Mesh(
+    new THREE.RingGeometry(2.55, 2.78, 36),
+    new THREE.MeshBasicMaterial({
+        color: 0x66f2ff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.78,
+        blending: THREE.AdditiveBlending
+    })
+);
+waterTidalRing1.rotation.x = -Math.PI / 2;
+waterTidalRing1.position.y = 0.06;
+waterDomainGroup.add(waterTidalRing1);
+
+const waterTidalRing2 = new THREE.Mesh(
+    new THREE.RingGeometry(4.6, 4.82, 12),
+    new THREE.MeshBasicMaterial({
+        color: 0x0099ff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.65,
+        blending: THREE.AdditiveBlending
+    })
+);
+waterTidalRing2.rotation.x = -Math.PI / 2;
+waterTidalRing2.position.y = 0.05;
+waterDomainGroup.add(waterTidalRing2);
+
+// (E) 8 座環繞祭壇的「深海琉璃水靈柱」
+for (let p = 0; p < 8; p++) {
+    const pa = (p / 8) * Math.PI * 2 + Math.PI / 8;
+    const pr = 5.4;
+    const px = Math.cos(pa) * pr;
+    const pz = Math.sin(pa) * pr;
+
+    // 避開東側星橋入口正中央
+    if (px > 4.2 && Math.abs(pz - 1.8) < 1.5) continue;
+
+    const pillarG = new THREE.Group();
+    pillarG.position.set(px, 0, pz);
+
+    const pBase = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.45, 0.45, 8), deepSapphireMat);
+    pBase.position.y = 0.225;
+    const pShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.3, 2.2, 8), pearlJadeMat);
+    pShaft.position.y = 1.5;
+    const pRing = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.18, 8), aquaSilverMat);
+    pRing.position.y = 1.65;
+    const pBowl = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.22, 0.3, 10), aquaSilverMat);
+    pBowl.position.y = 2.72;
+    pillarG.add(pBase, pShaft, pRing, pBowl);
+
+    const wSprite = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+            map: waterLotusOrbTex,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        })
+    );
+    wSprite.position.set(0, 3.35, 0);
+    wSprite.scale.set(1.05, 1.55, 1);
+    pillarG.add(wSprite);
+    animatedWaterSprites.push({
+        sprite: wSprite,
+        baseY: 3.35,
+        baseW: 1.05,
+        baseH: 1.55,
+        phase: p * 1.3
+    });
+
+    waterDomainGroup.add(pillarG);
+}
+
+// (F) 2.5D 「滄溟琉璃獨角獸」像素級水元素神獸煉成
+const waterUnicornGroup = new THREE.Group();
+waterUnicornGroup.position.set(0, 1.00, 0);
+waterAltarGroup.add(waterUnicornGroup);
+
+const waterCardGeo = new THREE.PlaneGeometry(1, 1);
+waterCardGeo.translate(0, 0.5, 0);
+
+const waterUnicornMat = new THREE.MeshBasicMaterial({
+    transparent: true,
+    side: THREE.DoubleSide,
+    alphaTest: 0.02,
+    depthWrite: false
+});
+const waterUnicornMesh = new THREE.Mesh(waterCardGeo, waterUnicornMat);
+waterUnicornMesh.scale.set(3.55, 3.55, 1);
+waterUnicornGroup.add(waterUnicornMesh);
+
+const waterHaloMat = new THREE.SpriteMaterial({
+    map: glowDotTex,
+    color: 0x00d8ff,
+    transparent: true,
+    opacity: 0.52,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+});
+const waterHaloSprite = new THREE.Sprite(waterHaloMat);
+waterHaloSprite.scale.set(4.2, 4.2, 1);
+waterHaloSprite.position.set(0, 1.75, -0.18);
+waterUnicornGroup.add(waterHaloSprite);
+
+function build3DRenderedWaterUnicorn(img) {
+    const maxDim = 800;
+    let w = img.naturalWidth || img.width || 512;
+    let h = img.naturalHeight || img.height || 512;
+    if (w > maxDim || h > maxDim) {
+        if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+        } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+        }
+    }
+
+    const outCanvas = document.createElement('canvas');
+    outCanvas.width = w;
+    outCanvas.height = h;
+    const ctx = outCanvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+
+    try {
+        const effThresh = 82;
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const d = imgData.data;
+        const visited = new Uint8Array(w * h);
+        const queue = new Int32Array(w * h);
+        let head = 0, tail = 0;
+
+        const isBgOrShadow = (p) => {
+            const r = d[p], g = d[p + 1], b = d[p + 2];
+            const maxC = Math.max(r, g, b);
+            if (maxC <= effThresh) return true;
+            const sat = maxC - Math.min(r, g, b);
+            if (maxC <= effThresh + 24 && sat < 28) return true;
+            return false;
+        };
+
+        const pushIfBg = (x, y) => {
+            const idx = y * w + x;
+            if (visited[idx]) return;
+            if (isBgOrShadow(idx * 4)) {
+                visited[idx] = 1;
+                queue[tail++] = idx;
+            }
+        };
+
+        for (let x = 0; x < w; x++) {
+            pushIfBg(x, 0);
+            pushIfBg(x, h - 1);
+        }
+        for (let y = 0; y < h; y++) {
+            pushIfBg(0, y);
+            pushIfBg(w - 1, y);
+        }
+
+        const legZoneStartY = Math.floor(h * 0.58);
+        for (let y = legZoneStartY; y < h - 1; y += 2) {
+            for (let x = 1; x < w - 1; x += 2) {
+                const idx = y * w + x;
+                if (!visited[idx] && Math.max(d[idx * 4], d[idx * 4 + 1], d[idx * 4 + 2]) <= 50) {
+                    pushIfBg(x, y);
+                }
+            }
+        }
+
+        while (head < tail) {
+            const curr = queue[head++];
+            d[curr * 4 + 3] = 0;
+            const cx = curr % w, cy = (curr / w) | 0;
+            if (cx > 0) pushIfBg(cx - 1, cy);
+            if (cx < w - 1) pushIfBg(cx + 1, cy);
+            if (cy > 0) pushIfBg(cx, cy - 1);
+            if (cy < h - 1) pushIfBg(cx, cy + 1);
+        }
+
+        const distMap = new Uint8Array(w * h);
+        let currentRing = [];
+        for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+                const idx = y * w + x;
+                if (visited[idx]) continue;
+                if (visited[idx - 1] || visited[idx + 1] || visited[idx - w] || visited[idx + w]) {
+                    distMap[idx] = 1;
+                    currentRing.push(idx);
+                }
+            }
+        }
+        for (let step = 2; step <= 4; step++) {
+            const nextRing = [];
+            for (let i = 0; i < currentRing.length; i++) {
+                const idx = currentRing[i];
+                const cx = idx % w, cy = (idx / w) | 0;
+                const nbs = [
+                    cx > 0 ? idx - 1 : -1,
+                    cx < w - 1 ? idx + 1 : -1,
+                    cy > 0 ? idx - w : -1,
+                    cy < h - 1 ? idx + w : -1
+                ];
+                for (let n = 0; n < 4; n++) {
+                    const nIdx = nbs[n];
+                    if (nIdx >= 0 && !visited[nIdx] && distMap[nIdx] === 0) {
+                        distMap[nIdx] = step;
+                        nextRing.push(nIdx);
+                    }
+                }
+            }
+            currentRing = nextRing;
+        }
+
+        // 水元素神獸色彩煉成：將鬃尾轉為深海琉璃藍 × 極光冰青 × 月華星銀漸層
+        const featherSpan = 72;
+        const featherMax = effThresh + featherSpan;
+
+        for (let i = 0; i < w * h; i++) {
+            if (visited[i]) continue;
+            const p = i * 4;
+            let r = d[p], g = d[p + 1], b = d[p + 2];
+            const maxC = Math.max(r, g, b);
+            const minC = Math.min(r, g, b);
+            const sat = maxC - minC;
+            const lum = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+
+            const dist = distMap[i];
+            if (dist > 0 && maxC < featherMax) {
+                let ratio = Math.max(0, (maxC - effThresh) / featherSpan);
+                ratio = Math.pow(ratio, dist === 1 ? 1.85 : 1.35);
+                d[p + 3] = Math.floor(ratio * 255);
+                if (d[p + 3] > 8 && maxC > 10) {
+                    const lift = Math.min(2.4, 215 / Math.max(65, maxC));
+                    r = Math.min(255, Math.round(r * lift));
+                    g = Math.min(255, Math.round(g * lift));
+                    b = Math.min(255, Math.round(b * lift));
+                }
+            }
+
+            if (d[p + 3] === 0) continue;
+
+            // (A) 眼眸深處：化為深海藍寶石神瞳
+            if (maxC < 145 && lum < 0.48) {
+                const eyeT = maxC / 145;
+                d[p] = Math.min(255, Math.round(8 + eyeT * 35));
+                d[p + 1] = Math.min(255, Math.round(45 + eyeT * 165));
+                d[p + 2] = Math.min(255, Math.round(95 + eyeT * 160));
+                continue;
+            }
+
+            // (B) 鬃毛、長尾與獨角：化為深海藍寶 -> 琉璃冰青 -> 星海極光白藍
+            const isCoolOrPastelMane = b > r + 6 || g > r + 6 || r - g > 18 || sat > 16;
+            if (isCoolOrPastelMane) {
+                const colorWeight = Math.min(1, Math.max(0.38, sat / 52));
+                let wr, wg, wb;
+                if (lum < 0.55) {
+                    const t = lum / 0.55;
+                    wr = 12 + t * 28;
+                    wg = 95 + t * 110;
+                    wb = 195 + t * 60;
+                } else if (lum < 0.82) {
+                    const t = (lum - 0.55) / 0.27;
+                    wr = 40 + t * 110;
+                    wg = 205 + t * 42;
+                    wb = 255;
+                } else {
+                    const t = (lum - 0.82) / 0.18;
+                    wr = 150 + t * 100;
+                    wg = 247 + t * 8;
+                    wb = 255;
+                }
+                d[p] = Math.min(255, Math.round(r * (1 - colorWeight) * 0.72 + wr * colorWeight));
+                d[p + 1] = Math.min(255, Math.round(g * (1 - colorWeight) * 0.95 + wg * colorWeight));
+                d[p + 2] = Math.min(255, Math.round(b * (1 - colorWeight) + wb * colorWeight));
+            } else {
+                // (C) 身軀毛皮：月華冰晶銀白光澤，暗部透出琉璃青藍水光
+                const shadowCool = Math.pow(1 - lum, 1.35);
+                d[p] = Math.min(255, Math.round(r * 0.88 - shadowCool * 45));
+                d[p + 1] = Math.min(255, Math.round(g * 0.98 + shadowCool * 12));
+                d[p + 2] = Math.min(255, Math.round(b * 1.04 + shadowCool * 38));
+            }
+
+            if (dist > 0) {
+                const rim = (5 - dist) * 0.18;
+                d[p] = Math.max(0, Math.round(d[p] * (1 - rim * 0.3)));
+                d[p + 1] = Math.min(255, Math.round(d[p + 1] + (235 - d[p + 1]) * rim));
+                d[p + 2] = Math.min(255, Math.round(d[p + 2] + (255 - d[p + 2]) * rim));
+            }
+        }
+
+        let maxOpaqueY = -1;
+        for (let y = h - 1; y >= 0; y--) {
+            let hasHoof = false;
+            for (let x = 0; x < w; x++) {
+                if (d[(y * w + x) * 4 + 3] > 60) {
+                    hasHoof = true;
+                    break;
+                }
+            }
+            if (hasHoof) {
+                maxOpaqueY = y;
+                break;
+            }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+
+        if (maxOpaqueY > 0 && maxOpaqueY < h - 2) {
+            const shiftDown = h - 2 - maxOpaqueY;
+            const tempC = document.createElement('canvas');
+            tempC.width = w;
+            tempC.height = h;
+            tempC.getContext('2d').drawImage(outCanvas, 0, 0);
+            ctx.clearRect(0, 0, w, h);
+            ctx.drawImage(tempC, 0, shiftDown);
+        }
+
+        // 在滄溟獨角獸身後繪製琉璃水月神環與十二芒冰晶法陣
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-over';
+        const cx = w * 0.48;
+        const cy = h * 0.48;
+        const ringR = w * 0.34;
+
+        ctx.strokeStyle = 'rgba(110, 240, 255, 0.75)';
+        ctx.lineWidth = Math.max(3, w * 0.007);
+        ctx.shadowColor = 'rgba(0, 195, 255, 0.9)';
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        for (let k = 0; k < 12; k++) {
+            const ang = (k / 12) * Math.PI * 2;
+            const r1 = ringR * 1.02;
+            const r2 = ringR * (k % 2 === 0 ? 1.22 : 1.12);
+            ctx.fillStyle = k % 2 === 0 ? 'rgba(165, 250, 255, 0.8)' : 'rgba(40, 180, 255, 0.68)';
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(ang - 0.05) * r1, cy + Math.sin(ang - 0.05) * r1);
+            ctx.lineTo(cx + Math.cos(ang) * r2, cy + Math.sin(ang) * r2);
+            ctx.lineTo(cx + Math.cos(ang + 0.05) * r1, cy + Math.sin(ang + 0.05) * r1);
+            ctx.closePath();
+            ctx.fill();
+        }
+        ctx.restore();
+    } catch (e) {}
+
+    const tex = new THREE.CanvasTexture(outCanvas);
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+
+    waterUnicornMat.map = tex;
+    waterUnicornMat.needsUpdate = true;
+    const aspect = w / h;
+    waterUnicornMesh.scale.set(3.55 * aspect, 3.55, 1);
+}
+
+const waterUnicornImg = new Image();
+waterUnicornImg.onload = () => build3DRenderedWaterUnicorn(waterUnicornImg);
+waterUnicornImg.src = 'assets/unicorn.jpg';
+
+const waterDomainLight = new THREE.PointLight(0x00ccff, 2.6, 22);
+waterDomainLight.position.set(0, 3.6, 0);
+waterDomainGroup.add(waterDomainLight);
+
+// (G) 環繞水元素領域的 10 棵「月光垂絲琉璃古樹」與 12 簇「冰藍海藍寶水晶簇」
+const waterBarkMat = new THREE.MeshStandardMaterial({
+    color: 0x162b3d,
+    emissive: 0x052844,
+    emissiveIntensity: 0.35,
+    roughness: 0.78
+});
+const waterTreeVariant = {
+    name: '月光垂絲琉璃古樹',
+    leafShadow: '#06263d',
+    leafMid: '#0d6b99',
+    leafLight: '#33d6ff',
+    leafTip: '#ccffff',
+    style: 'weeping'
+};
+const waterPuffMats = [
+    new THREE.SpriteMaterial({
+        map: createFoliagePuffTexture(waterTreeVariant, 0, 91),
+        transparent: true,
+        alphaTest: 0.06
+    }),
+    new THREE.SpriteMaterial({
+        map: createFoliagePuffTexture(waterTreeVariant, 1, 92),
+        transparent: true,
+        alphaTest: 0.06
+    }),
+    new THREE.SpriteMaterial({
+        map: createFoliagePuffTexture(waterTreeVariant, 2, 93),
+        transparent: true,
+        alphaTest: 0.06
+    })
+];
+
+function buildWaterElementTree(seed) {
+    const wTree = new THREE.Group();
+    add3DBranchSegment(wTree, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1.4, 0), 0.36, 0.23, waterBarkMat);
+    const bDirs = [
+        new THREE.Vector3(-0.65, 0.85, 0.35).normalize(),
+        new THREE.Vector3(0.68, 0.82, -0.32).normalize(),
+        new THREE.Vector3(0.15, 0.92, 0.62).normalize(),
+        new THREE.Vector3(-0.22, 0.90, -0.65).normalize()
+    ];
+    for (let b = 0; b < bDirs.length; b++) {
+        const p1 = new THREE.Vector3(0, 1.22, 0);
+        const p2 = p1.clone().addScaledVector(bDirs[b], 1.35);
+        add3DBranchSegment(wTree, p1, p2, 0.19, 0.11, waterBarkMat);
+
+        for (let sb = 0; sb < 2; sb++) {
+            const sDir = bDirs[b]
+                .clone()
+                .add(new THREE.Vector3((sb === 0 ? 1 : -1) * 0.45, 0.55, (b % 2 === 0 ? 1 : -1) * 0.35))
+                .normalize();
+            const p3 = p2.clone().addScaledVector(sDir, 1.05);
+            add3DBranchSegment(wTree, p2, p3, 0.11, 0.05, waterBarkMat);
+
+            const sp = new THREE.Sprite(waterPuffMats[(b + sb) % 3]);
+            sp.position.copy(p3).add(new THREE.Vector3(0, 0.25, 0));
+            const sz = 1.65 + ((seed + b + sb) % 3) * 0.32;
+            sp.scale.set(sz * 1.15, sz * 0.95, 1);
+            wTree.add(sp);
+        }
+    }
+    const topSp = new THREE.Sprite(waterPuffMats[2]);
+    topSp.position.set(0, 3.48, 0);
+    topSp.scale.set(2.35, 1.95, 1);
+    wTree.add(topSp);
+    return wTree;
+}
+
+for (let wt = 0; wt < 10; wt++) {
+    const wa = (wt / 10) * Math.PI * 2 + 0.18;
+    const wr = 7.8 + (wt % 2) * 1.1;
+    const wx = Math.cos(wa) * wr;
+    const wz = Math.sin(wa) * wr;
+
+    // 避開東側星橋入口走廊
+    if (wx > 4.8 && Math.abs(wz - 2.2) < 2.6) continue;
+
+    const waterTree = buildWaterElementTree(wt);
+    waterTree.position.set(wx, 0, wz);
+    waterTree.scale.setScalar(0.95 + (wt % 3) * 0.18);
+    waterTree.rotation.y = wt * 1.1;
+    waterDomainGroup.add(waterTree);
+}
+
+// 12 簇冰藍海藍寶晶簇
+const waterCrystalMat = new THREE.MeshStandardMaterial({
+    color: 0x44eeff,
+    emissive: 0x0088ee,
+    emissiveIntensity: 0.9,
+    roughness: 0.12,
+    metalness: 0.35
+});
+for (let wc = 0; wc < 12; wc++) {
+    const ca = (wc / 12) * Math.PI * 2 + 0.32;
+    const cr = 6.3 + (wc % 3) * 0.9;
+    const cx = Math.cos(ca) * cr;
+    const cz = Math.sin(ca) * cr;
+    if (cx > 4.2 && Math.abs(cz - 1.9) < 2.2) continue;
+
+    const cCluster = new THREE.Group();
+    cCluster.position.set(cx, 0, cz);
+    for (let k = 0; k < 3; k++) {
+        const h = 0.55 + (k % 2) * 0.35;
+        const shard = new THREE.Mesh(new THREE.ConeGeometry(0.14, h, 5), waterCrystalMat);
+        shard.position.set((k - 1) * 0.16, h * 0.45, (k % 2) * 0.12);
+        shard.rotation.z = (k - 1) * 0.28;
+        cCluster.add(shard);
+    }
+    waterDomainGroup.add(cCluster);
+}
+
+// (H) 水元素領域漫天升騰的 130 顆星海螢光水泡粒子 (Water Bubbles)
+const waterBubbleCount = 130;
+const waterBubbleGeo = new THREE.BufferGeometry();
+const waterBubblePos = new Float32Array(waterBubbleCount * 3);
+const waterBubbleCol = new Float32Array(waterBubbleCount * 3);
+const waterBubbleData = [];
+const bubblePalette = [new THREE.Color(0x99ffff), new THREE.Color(0x33ccff), new THREE.Color(0x88aaff)];
+
+for (let i = 0; i < waterBubbleCount; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const r = 0.6 + Math.random() * 8.2;
+    const rx = Math.cos(a) * r;
+    const ry = 0.2 + Math.random() * 6.5;
+    const rz = Math.sin(a) * r;
+    waterBubblePos[i * 3] = rx;
+    waterBubblePos[i * 3 + 1] = ry;
+    waterBubblePos[i * 3 + 2] = rz;
+
+    const c = bubblePalette[i % bubblePalette.length];
+    waterBubbleCol[i * 3] = c.r;
+    waterBubbleCol[i * 3 + 1] = c.g;
+    waterBubbleCol[i * 3 + 2] = c.b;
+    waterBubbleData.push({
+        radius: r,
+        angle: a,
+        y: ry,
+        speedY: 0.55 + Math.random() * 1.05,
+        spin: 0.25 + Math.random() * 0.5,
+        phase: Math.random() * Math.PI * 2
+    });
+}
+waterBubbleGeo.setAttribute('position', new THREE.BufferAttribute(waterBubblePos, 3));
+waterBubbleGeo.setAttribute('color', new THREE.BufferAttribute(waterBubbleCol, 3));
+const waterBubbles = new THREE.Points(
+    waterBubbleGeo,
+    new THREE.PointsMaterial({
+        size: 0.28,
+        map: glowDotTex,
+        vertexColors: true,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    })
+);
+waterDomainGroup.add(waterBubbles);
+
+// (I) 滄溟獨角獸「琉璃潮汐覺醒」爆發動畫控制器 (waterDomainFX)
+const waterAwakeningRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.8, 1.35, 36),
+    new THREE.MeshBasicMaterial({
+        color: 0x66f2ff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    })
+);
+waterAwakeningRing.rotation.x = -Math.PI / 2;
+waterAwakeningRing.position.y = 0.95;
+waterAwakeningRing.visible = false;
+waterDomainGroup.add(waterAwakeningRing);
+
+const waterDomainFX = {
+    active: false,
+    timer: 0,
+    duration: 2.8,
+    triggerAwakening() {
+        this.active = true;
+        this.timer = 0;
+        waterAwakeningRing.visible = true;
+        waterAwakeningRing.scale.setScalar(0.5);
+        waterAwakeningRing.material.opacity = 1.0;
+    },
+    update(delta, elapsed) {
+        if (!this.active) return;
+        this.timer += delta;
+        const p = Math.min(1, this.timer / this.duration);
+        waterAwakeningRing.scale.setScalar(0.5 + p * 6.5);
+        waterAwakeningRing.position.y = 0.95 + Math.sin(p * Math.PI) * 1.6;
+        waterAwakeningRing.material.opacity = (1 - p) * 0.95;
+
+        waterDomainLight.intensity = 2.6 + Math.sin(p * Math.PI) * 4.2;
+        waterHaloSprite.scale.setScalar(4.2 + Math.sin(p * Math.PI) * 2.6);
+        waterUnicornGroup.position.y = 1.00 + Math.sin(p * Math.PI) * 0.18;
+
+        if (p >= 1) {
+            this.active = false;
+            waterAwakeningRing.visible = false;
+            waterDomainLight.intensity = 2.6;
+        }
+    }
+};
+let heroInWaterDomain = false;
+
 // 森林螢火蟲
 const fireflyCount = 130;
 const ffGeo = new THREE.BufferGeometry();
@@ -2464,10 +3273,26 @@ function optimizeSanctuaryDrawCalls() {
         fireAltarHit,
         fTier1,
         fTier2,
-        fTier3
+        fTier3,
+        waterGround,
+        waterTidalRing1,
+        waterTidalRing2,
+        waterAwakeningRing,
+        waterUnicornMesh,
+        waterAltarHit,
+        wTier1,
+        wTier2,
+        wTier3
     ]);
 
-    const targetGroups = [forestGroup, gateGroup, flameGateGroup, fireDomainGroup];
+    const targetGroups = [
+        forestGroup,
+        gateGroup,
+        flameGateGroup,
+        fireDomainGroup,
+        waterGateGroup,
+        waterDomainGroup
+    ];
     const tmpPos = new THREE.Vector3();
     const tmpScale = new THREE.Vector3();
 
@@ -2644,6 +3469,7 @@ const oracleSystem = new OracleSystem({
     ascensionFX,
     wishTreeFX,
     fireDomainFX,
+    waterDomainFX,
     setCameraTarget
 });
 
@@ -2696,8 +3522,8 @@ window.addEventListener('pointerup', (e) => {
         }
     }
 
-    // 3. 點擊森林草地或赤焰熔岩大地：讓男女主角自由走過去
-    const floorHits = raycaster.intersectObjects([fireGround, floor]);
+    // 3. 點擊森林草地、赤焰熔岩大地或琉璃星海大地：讓男女主角自由走過去
+    const floorHits = raycaster.intersectObjects([waterGround, fireGround, floor]);
     if (floorHits.length > 0) {
         closeAllModals();
         hero.walkTo(floorHits[0].point);
@@ -2749,7 +3575,7 @@ function animate() {
     unicorn.update(delta, elapsed);
     hero.update(delta, elapsed);
 
-    // 偵測主角是否走入「🔥 赤焰獨角獸領域」範圍 (半徑 8.6m)
+    // 偵測主角是否走入「🔥 赤焰獨角獸領域」或「💧 琉璃水元素領域」範圍 (半徑 8.6m)
     const distToFireDomain = Math.hypot(hero.root.position.x - 22.0, hero.root.position.z - (-7.2));
     if (distToFireDomain < 8.6 && !heroInFireDomain) {
         heroInFireDomain = true;
@@ -2758,10 +3584,18 @@ function animate() {
         heroInFireDomain = false;
     }
 
-    // 2. 若勾選「鏡頭跟隨主角」，視角焦點平滑跟隨主角移動（走進赤焰領域時自動延伸視角）
+    const distToWaterDomain = Math.hypot(hero.root.position.x - (-22.0), hero.root.position.z - (-7.2));
+    if (distToWaterDomain < 8.6 && !heroInWaterDomain) {
+        heroInWaterDomain = true;
+        showToast('💧 已踏入【琉璃星海・水元素領域】！深海潮汐與水月法陣正在淨化您的心緒');
+    } else if (distToWaterDomain > 9.4 && heroInWaterDomain) {
+        heroInWaterDomain = false;
+    }
+
+    // 2. 若勾選「鏡頭跟隨主角」，視角焦點平滑跟隨主角移動（走進赤焰或琉璃水領域時自動延伸視角）
     const followEl = document.getElementById('camFollowHero');
     if (followEl && followEl.checked && !camTargetPos) {
-        const ratio = heroInFireDomain ? 0.88 : 0.65;
+        const ratio = heroInFireDomain || heroInWaterDomain ? 0.88 : 0.65;
         const targetLook = new THREE.Vector3(hero.root.position.x * ratio, 1.45, hero.root.position.z * ratio);
         controls.target.lerp(targetLook, Math.min(1, delta * 5.0));
     }
@@ -2816,6 +3650,36 @@ function animate() {
     feAttr.needsUpdate = true;
 
     fireDomainFX.update(delta, elapsed);
+
+    // 3.6 更新 💧 琉璃星海・水元素領域（2.5D 滄溟神獸精準水平 Billboard、水蓮靈珠呼吸、潮汐法陣與升騰星海氣泡）
+    if (!waterDomainFX.active) {
+        waterUnicornGroup.position.y = 1.00;
+        waterHaloSprite.scale.setScalar(4.2 + Math.sin(elapsed * 2.8) * 0.32);
+    }
+    waterUnicornGroup.rotation.y = Math.atan2(camera.position.x - (-22.0), camera.position.z - (-7.2));
+    waterTidalRing1.rotation.z = -elapsed * 0.38;
+    waterTidalRing2.rotation.z = elapsed * 0.24;
+    waterGroundMat.emissiveIntensity = 0.36 + Math.sin(elapsed * 2.2) * 0.10;
+
+    for (let i = 0; i < animatedWaterSprites.length; i++) {
+        const wl = animatedWaterSprites[i];
+        const pulse = Math.sin(elapsed * 4.2 + wl.phase) * 0.10;
+        wl.sprite.scale.set(wl.baseW * (1 + pulse * 0.5), wl.baseH * (1 + pulse), 1);
+        wl.sprite.position.y = wl.baseY + pulse * 0.14;
+    }
+
+    const wbAttr = waterBubbleGeo.attributes.position;
+    for (let i = 0; i < waterBubbleCount; i++) {
+        const bd = waterBubbleData[i];
+        bd.y += delta * bd.speedY;
+        if (bd.y > 6.8) bd.y = 0.15;
+        const curA = bd.angle - elapsed * bd.spin;
+        const swayR = bd.radius + Math.sin(elapsed * 1.8 + bd.phase) * 0.32;
+        wbAttr.setXYZ(i, Math.cos(curA) * swayR, bd.y, Math.sin(curA) * swayR);
+    }
+    wbAttr.needsUpdate = true;
+
+    waterDomainFX.update(delta, elapsed);
 
     // 4. 更新神諭浮空卡牌陣、抽牌變色飛升動畫與飛行中的祈願星果光球
     oracleSystem.update(delta, elapsed);

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>月光森林聖域 — 東方主角自由漫步 × 獨角獸心安宮</title>
-    <link rel="stylesheet" href="css/style.css?v=20261115_7">
+    <link rel="stylesheet" href="css/style.css?v=20261115_8">
 </head>
 <body>
     <div id="dropOverlay">🦄 放開滑鼠以更新守護獨角獸圖片或自訂 MP3 配樂！</div>
@@ -75,7 +75,7 @@
         <div class="row"><span>森林迷霧濃度:</span><input type="range" id="fogDensity" min="0.005" max="0.05" step="0.002" value="0.020"><span class="val" id="fogDensityVal">0.020</span></div>
     </div>
 
-    <!-- 底部：心安宮 5 大療癒問事導覽列 + 火元素獨角獸領域 -->
+    <!-- 底部：心安宮 5 大療癒問事導覽列 + 火元素與水元素獨角獸領域 -->
     <div id="navDock">
         <button class="nav-btn active" onclick="commandHeroToStation('sanctuary')">🏛️ 聖域全景</button>
         <button class="nav-btn" onclick="commandHeroToStation('pool')">💧 許願星泉 (稟報)</button>
@@ -83,6 +83,7 @@
         <button class="nav-btn" onclick="commandHeroToStation('oracle')">🃏 靈籤神諭 (抽牌)</button>
         <button class="nav-btn" onclick="commandHeroToStation('tree')">🌳 祈願靈樹 (留存)</button>
         <button class="nav-btn" style="border-color:rgba(255,95,30,0.75); color:#ffb380; background:linear-gradient(135deg,rgba(180,35,0,0.45),rgba(60,10,5,0.65));" onclick="commandHeroToStation('fire_domain')">🔥 赤焰獨角獸領域</button>
+        <button class="nav-btn" style="border-color:rgba(0,215,255,0.75); color:#99f2ff; background:linear-gradient(135deg,rgba(0,95,160,0.48),rgba(5,28,58,0.68));" onclick="commandHeroToStation('water_domain')">💧 琉璃水元素領域</button>
         <button class="nav-btn" onclick="triggerDewOffering()">✨ 獻上晨露</button>
     </div>
 
@@ -160,6 +161,23 @@
         </div>
     </div>
 
+    <!-- 彈窗 6：水元素獨角獸領域（琉璃星海・淨化與靈感賜福） -->
+    <div id="modalWaterDomain" class="modal-card" style="border-color: rgba(0, 225, 255, 0.78); box-shadow: 0 18px 50px rgba(0, 145, 255, 0.45);">
+        <span class="close-x" onclick="closeAllModals()">✕</span>
+        <div class="oracle-badge" style="background: linear-gradient(90deg, #00c6ff, #80ffe8); color:#021626;">💧 水元素聖域・琉璃星海獨角獸</div>
+        <div class="modal-title" style="color: #7ee8ff;">🌊 滄溟聖壇・星海甘露共鳴</div>
+        <div class="modal-desc" id="waterDomainDesc">
+            主角已踏入以水元素構築的西側「琉璃星海・水元素領域」。此處由深海琉璃星池、八座水靈石柱、月光垂絲琉璃古樹與冷光水母氣泡環繞，掌管**「情緒深層洗滌、直覺靈感湧現、溫柔包容與靈魂澄明」**。<br><br>
+            請點擊下方按鈕，祈請琉璃水元素獨角獸降下**「星海甘露覺醒儀式」**：
+        </div>
+        <div id="waterBlessingQuote" class="oracle-quote" style="display:none; border-left-color:#00e5ff; background:rgba(0, 180, 255, 0.14); color:#ccf7ff;"></div>
+        <div style="margin-top: 14px;">
+            <button class="action-btn" style="background: linear-gradient(135deg, #00b4db, #70ffe0); color:#021826; box-shadow: 0 4px 18px rgba(0, 210, 255, 0.5);" onclick="triggerWaterUnicornAwakening()">💧 喚醒星海甘露・祈請澄明賜福</button>
+            <button class="action-btn secondary" onclick="commandHeroToStation('sanctuary')">🌙 返回月光主聖域</button>
+            <button class="action-btn secondary" onclick="closeAllModals()">在水之領域漫步</button>
+        </div>
+    </div>
+
     <!-- 防黑屏檢核 1：全域錯誤攔截器 -->
     <script>
         window.addEventListener('error', function(e) {
@@ -176,6 +194,6 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <!-- 原生 ES Modules 主程式入口 -->
-    <script type="module" src="js/main.js?v=20261115_7"></script>
+    <script type="module" src="js/main.js?v=20261115_8"></script>
 </body>
 </html>

@@ -152,7 +152,7 @@ export function showToast(msg) {
 }
 
 export function closeAllModals() {
-    ['modalPool', 'modalAltar', 'modalOracle', 'modalTree', 'modalFireDomain'].forEach((id) => {
+    ['modalPool', 'modalAltar', 'modalOracle', 'modalTree', 'modalFireDomain', 'modalWaterDomain'].forEach((id) => {
         const el = document.getElementById(id);
         if (el) {
             el.style.display = 'none';
@@ -165,6 +165,12 @@ export const FIRE_ORACLE_QUOTES = [
     '🔥 <b>【赤焰聖諭・燎原破局】</b><br>「莫畏前途霜雪寒，胸中聖火自燎原；一朝踏碎躊躇影，萬里晴空任騰驤！」<br><span style="font-size:13px; color:#ffd4b3;">👉 赤焰獨角獸賜予您果斷行動的勇氣：現在正是打破僵局、主動出擊的最佳時機！</span>',
     '🔥 <b>【赤焰聖諭・浴火新生】</b><br>「舊繭焚盡見真金，烈焰淬鍊志更堅；莫嘆昨日風波惡，今朝破浪啟新篇！」<br><span style="font-size:13px; color:#ffd4b3;">👉 過去的阻礙與消耗都已化為滋養您的養分，請大膽放下包袱，迎接全新的突破！</span>',
     '🔥 <b>【赤焰聖諭・曜日領航】</b><br>「金角燃光破夜長，赤心所向即康莊；無須借問風雲路，你自生來有鋒芒！」<br><span style="font-size:13px; color:#ffd4b3;">👉 請相信自己的實力與熱情，展現您的主導力，周遭的人事物將因您的光芒而匯聚！</span>'
+];
+
+export const WATER_ORACLE_QUOTES = [
+    '💧 <b>【滄溟聖諭・琉璃澄心】</b><br>「萬頃星瀾映碧霄，潮平風定自逍遙；洗盡心頭千般慮，一輪明月照歸潮。」<br><span style="font-size:13px; color:#b3f0ff;">👉 水元素獨角獸為您撫平近日的疲憊與思慮：當內心如鏡湖般澄澈，最佳解答將自然浮現！</span>',
+    '💧 <b>【滄溟聖諭・上善若水】</b><br>「柔水穿石不爭先，隨方就圓自通玄；莫與逆流強相抗，順勢輕舟過萬山！」<br><span style="font-size:13px; color:#b3f0ff;">👉 面對當前的變化，以柔克剛、順勢而為是最好的智慧，轉個彎將看見更寬廣的星海！</span>',
+    '💧 <b>【滄溟聖諭・甘露靈泉】</b><br>「瑤池甘露落星津，潤物無聲萬象新；靜聽深海潮音起，靈犀一點破迷津。」<br><span style="font-size:13px; color:#b3f0ff;">👉 您的直覺與靈感正在大幅覺醒，請留意近期浮現的靈光一閃與溫柔貴人！</span>'
 ];
 
 export class OracleSystem {
@@ -181,6 +187,7 @@ export class OracleSystem {
         ascensionFX,
         wishTreeFX,
         fireDomainFX,
+        waterDomainFX,
         setCameraTarget
     }) {
         this.scene = scene;
@@ -195,6 +202,7 @@ export class OracleSystem {
         this.ascensionFX = ascensionFX;
         this.wishTreeFX = wishTreeFX;
         this.fireDomainFX = fireDomainFX;
+        this.waterDomainFX = waterDomainFX;
         this.setCameraTarget = setCameraTarget;
 
         this.currentCategory = '心靈療癒與陪伴';
@@ -1151,6 +1159,26 @@ export class OracleSystem {
                 },
                 new THREE.Vector3(22.0, 0, -7.2)
             );
+        } else if (stationName === 'water_domain') {
+            if (btns[6]) btns[6].classList.add('active');
+            showToast('💧 主角正踏上琉璃水月星橋，走進「滄溟獨角獸・琉璃星海水元素領域」...');
+            this.setCameraTarget(new THREE.Vector3(-17.6, 3.9, 0.2), new THREE.Vector3(-22.0, 2.1, -7.2));
+            this.hero.walkTo(
+                new THREE.Vector3(-19.4, 0, -5.4),
+                () => {
+                    const quoteEl = document.getElementById('waterBlessingQuote');
+                    if (quoteEl) quoteEl.style.display = 'none';
+                    const modalEl = document.getElementById('modalWaterDomain');
+                    if (modalEl) {
+                        modalEl.style.display = 'block';
+                        modalEl.classList.remove('oracle-reveal-anim');
+                        void modalEl.offsetWidth;
+                        modalEl.classList.add('oracle-reveal-anim');
+                    }
+                    showToast('🌊 已抵達「琉璃星海・水元素領域」！感受深海潮汐的淨化與靈感共鳴');
+                },
+                new THREE.Vector3(-22.0, 0, -7.2)
+            );
         }
     }
 
@@ -1273,6 +1301,20 @@ export class OracleSystem {
             }
             this.setCameraTarget(new THREE.Vector3(18.5, 3.3, -1.2), new THREE.Vector3(22.0, 2.3, -7.2));
             showToast('🔥 赤焰獨角獸展開太陽聖火雙翼！熾熱的破局與行動能量正環繞全身！');
+        };
+
+        window.triggerWaterUnicornAwakening = () => {
+            if (this.waterDomainFX && this.waterDomainFX.triggerAwakening) {
+                this.waterDomainFX.triggerAwakening();
+            }
+            const quoteEl = document.getElementById('waterBlessingQuote');
+            if (quoteEl) {
+                const pick = WATER_ORACLE_QUOTES[Math.floor(Math.random() * WATER_ORACLE_QUOTES.length)];
+                quoteEl.innerHTML = pick;
+                quoteEl.style.display = 'block';
+            }
+            this.setCameraTarget(new THREE.Vector3(-18.5, 3.3, -1.2), new THREE.Vector3(-22.0, 2.3, -7.2));
+            showToast('💧 滄溟獨角獸揚起琉璃星海潮汐！溫柔澄澈的淨化與靈感正環繞全身！');
         };
     }
 }
