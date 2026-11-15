@@ -10,119 +10,189 @@ body {
     user-select: none;
 }
 
-/* 左上角聖域與主角切換面板 */
+/* 左上角聖域與主角切換面板（緊湊版 + 支援一鍵收合） */
 #topBar {
     position: absolute;
-    top: 12px;
-    left: 12px;
+    top: 10px;
+    left: 10px;
     color: #e8f6ff;
-    background: rgba(8, 16, 28, 0.86);
-    padding: 12px 16px;
+    background: rgba(8, 16, 28, 0.84);
+    padding: 8px 12px;
     border-radius: 12px;
     border: 1px solid rgba(136, 238, 255, 0.35);
-    line-height: 1.5;
+    line-height: 1.35;
     z-index: 10;
     backdrop-filter: blur(8px);
-    max-width: 430px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
+    width: max-content;
+    max-width: min(375px, calc(100vw - 140px));
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
+    transition: all 0.22s ease;
+}
+
+.topbar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
 }
 
 .title-glow {
     color: #ffd700;
     font-weight: bold;
-    font-size: 16px;
-    letter-spacing: 1px;
+    font-size: 14.5px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.btn-collapse-ui {
+    background: rgba(136, 238, 255, 0.14);
+    color: #99f2ff;
+    border: 1px solid rgba(136, 238, 255, 0.4);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: 0.2s;
+}
+
+.btn-collapse-ui:hover {
+    background: rgba(136, 238, 255, 0.28);
+    color: #fff;
+}
+
+#topBarBody {
+    margin-top: 4px;
+}
+
+#topBarBody.collapsed {
+    display: none;
 }
 
 .sub-info {
-    font-size: 12px;
+    font-size: 11px;
     color: #a8c8e0;
-    margin-top: 2px;
+    margin-bottom: 4px;
 }
 
 .hero-switch {
     display: flex;
-    gap: 6px;
-    margin-top: 8px;
+    gap: 4px;
+    margin-top: 5px;
     align-items: center;
     flex-wrap: wrap;
+}
+
+.row-label {
+    font-size: 11.5px;
+    font-weight: bold;
+    min-width: 36px;
+}
+
+.follow-label {
+    font-size: 11px;
+    color: #bce;
+    cursor: pointer;
+    margin-left: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
 }
 
 .btn-role {
     background: rgba(255, 255, 255, 0.08);
     color: #cde;
-    border: 1px solid rgba(136, 238, 255, 0.35);
-    padding: 5px 11px;
-    border-radius: 18px;
-    font-size: 12.5px;
+    border: 1px solid rgba(136, 238, 255, 0.32);
+    padding: 3px 9px;
+    border-radius: 14px;
+    font-size: 11.5px;
     font-weight: bold;
     cursor: pointer;
-    transition: 0.2s;
+    transition: 0.18s;
+}
+
+.btn-role:hover {
+    background: rgba(136, 238, 255, 0.2);
+    color: #fff;
 }
 
 .btn-role.active {
     background: linear-gradient(135deg, #00d2ff, #3a7bd5);
     color: #fff;
     border-color: #88eeff;
-    box-shadow: 0 2px 10px rgba(0, 210, 255, 0.4);
+    box-shadow: 0 2px 8px rgba(0, 210, 255, 0.4);
 }
 
 .audio-box {
-    margin-top: 8px;
-    padding: 7px 10px;
+    margin-top: 6px;
+    padding: 5px 8px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(136, 238, 255, 0.22);
-    border-radius: 10px;
+    border-radius: 8px;
 }
 
 .audio-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
     flex-wrap: wrap;
 }
 
 .top-vol-wrap {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 12px;
+    gap: 4px;
+    font-size: 11px;
     color: #c2dff5;
     background: rgba(255, 255, 255, 0.05);
-    padding: 3px 9px;
-    border-radius: 16px;
+    padding: 2px 7px;
+    border-radius: 14px;
     border: 1px solid rgba(136, 238, 255, 0.22);
 }
 
 #bgmVolume {
-    width: 85px;
-    height: 5px;
+    width: 64px;
+    height: 4px;
     accent-color: #ffd700;
     cursor: pointer;
 }
 
 .mini-btns {
     display: flex;
-    gap: 6px;
-    margin-top: 8px;
-    padding-top: 6px;
+    gap: 5px;
+    margin-top: 6px;
+    padding-top: 5px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     flex-wrap: wrap;
+    align-items: center;
 }
 
 .btn-mini {
     background: rgba(255, 215, 0, 0.16);
     color: #ffd700;
     border: 1px solid rgba(255, 215, 0, 0.45);
-    padding: 4px 9px;
+    padding: 3px 8px;
     border-radius: 6px;
-    font-size: 11.5px;
+    font-size: 11px;
     cursor: pointer;
     transition: 0.2s;
 }
 
 .btn-mini:hover {
     background: rgba(255, 215, 0, 0.32);
+}
+
+#perfStats {
+    font-size: 10.5px;
+    color: #66ffcc;
+    background: rgba(0, 40, 35, 0.65);
+    border: 1px solid rgba(102, 255, 204, 0.35);
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-family: monospace;
 }
 
 .btn-audio {
@@ -195,37 +265,54 @@ body {
     color: #ffd700;
 }
 
-/* 底部「心安宮聖域五步導覽列」 */
+/* 底部「心安宮聖域導覽列」（自動適應視窗寬度・支援一鍵收合） */
 #navDock {
     position: absolute;
-    bottom: 18px;
+    bottom: 12px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: max-content;
+    max-width: calc(100vw - 20px);
     background: rgba(8, 15, 28, 0.88);
-    padding: 9px 14px;
-    border-radius: 40px;
-    border: 1px solid rgba(255, 215, 0, 0.4);
+    padding: 7px 11px;
+    border-radius: 26px;
+    border: 1px solid rgba(255, 215, 0, 0.42);
     backdrop-filter: blur(10px);
     z-index: 10;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.65);
-    white-space: nowrap;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.65);
+    transition: all 0.22s ease;
+}
+
+.nav-dock-items {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+}
+
+.nav-dock-items.collapsed {
+    display: none;
 }
 
 .nav-btn {
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.07);
     color: #d8eeff;
-    border: 1px solid rgba(160, 215, 255, 0.25);
-    padding: 8px 14px;
-    border-radius: 25px;
-    font-size: 13.5px;
+    border: 1px solid rgba(160, 215, 255, 0.28);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12.5px;
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.25s;
-    display: flex;
+    transition: all 0.2s;
+    display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
+    white-space: nowrap;
 }
 
 .nav-btn:hover,
@@ -234,7 +321,25 @@ body {
     color: #ffd700;
     border-color: #ffd700;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.25);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.28);
+}
+
+.nav-collapse-btn {
+    background: rgba(255, 215, 0, 0.14);
+    color: #ffd700;
+    border: 1px solid rgba(255, 215, 0, 0.45);
+    padding: 5px 10px;
+    border-radius: 18px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.nav-collapse-btn:hover {
+    background: rgba(255, 215, 0, 0.3);
+    transform: translateY(-1px);
 }
 
 /* 互動毛玻璃彈窗 */
